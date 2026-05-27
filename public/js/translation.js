@@ -28,8 +28,9 @@ let isMuted = false;
 let audioChunks = [];
 let silenceTimer = null;
 
-const SILENCE_THRESHOLD = 0.04;  // raised — filters background noise & prevents Whisper hallucinations
-const SILENCE_DURATION  = 500;  // ms — long enough for complete phrases
+const SILENCE_THRESHOLD  = 0.04;   // raised — filters background noise & prevents Whisper hallucinations
+const SILENCE_DURATION   = 500;   // ms — long enough for complete phrases
+const MAX_CHUNK_SAMPLES  = 16000 * 6; // 6s max — prevents oversized payloads on Safari/Railway
 
 window.muteTranslation = (muted) => {
   isMuted = muted;
@@ -64,6 +65,14 @@ async function startTranslation() {
         if (typeof window.onAudioActivity === 'function') window.onAudioActivity(volume);
         const pcm16 = floatToPCM16(inputData);
         audioChunks.push(pcm16);
+
+        // Force-send if buffer exceeds max size (prevents oversized payloads)
+        const totalSamples = audioChunks.reduce((s, c) => s + c.length, 0);
+        if (totalSamples >= MAX_CHUNK_SAMPLES) {
+          if (silenceTimer) clearTimeout(silenceTimer);
+          processAudio();
+          return;
+        }
 
         if (silenceTimer) clearTimeout(silenceTimer);
         silenceTimer = setTimeout(() => {

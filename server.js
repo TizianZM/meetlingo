@@ -61,6 +61,13 @@ app.post('/api/meeting-start', express.json(), (req, res) => {
   res.json({ success: true });
 });
 
+// Host ends meeting — listeners detect this via /api/meeting-status poll
+app.post('/api/meeting-end', (req, res) => {
+  meetingActive = false;
+  console.log('[Session] Meeting ended');
+  res.json({ success: true });
+});
+
 // Poll meeting status (listener waiting screen)
 app.get('/api/meeting-status', (req, res) => {
   res.json({ active: meetingActive });
