@@ -284,8 +284,13 @@
         <h2 class="text-label-md uppercase tracking-widest text-tertiary font-bold mb-4">Share Meeting QR</h2>
         <!-- Real QR code rendered here by qrcode.js -->
         <div id="qr-container" class="mb-3 flex items-center justify-center" style="width:160px;height:160px;"></div>
-        <p class="text-caption text-tertiary mb-1">Guests scan this to join</p>
-        <p id="qr-url" class="text-caption text-[#95C11E] font-medium break-all text-center" style="font-size:11px;max-width:220px;"></p>
+        <p class="text-caption text-tertiary mb-2">Guests scan this to join</p>
+        <!-- Shareable URL with copy button -->
+        <div style="display:flex;align-items:center;gap:6px;background:#f5f5f5;border-radius:8px;padding:7px 10px;width:100%;max-width:260px;">
+          <p id="qr-url" style="font-size:11px;color:#4b6400;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;font-family:'Source Sans 3',sans-serif;"></p>
+          <button id="qr-copy-btn" onclick="(function(){var t=document.getElementById('qr-url').textContent;navigator.clipboard.writeText(t).then(function(){var b=document.getElementById('qr-copy-btn');b.textContent='✓';setTimeout(function(){b.textContent='Copy';},1500);})})()" style="background:#95C11E;color:white;border:none;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Source Sans 3',sans-serif;">Copy</button>
+        </div>
+        <p id="qr-local-hint" style="display:none;font-size:10px;color:#A77F4E;margin-top:6px;text-align:center;font-family:'Source Sans 3',sans-serif;">⚠️ Local server — guests must be on the same WiFi network</p>
     </div>
 
 </main>
@@ -508,10 +513,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
   (function() {
-    // Use the server's actual URL so guests on the same network can scan and join
     var meetingUrl = window.location.origin;
     var container  = document.getElementById('qr-container');
     var urlLabel   = document.getElementById('qr-url');
+    var localHint  = document.getElementById('qr-local-hint');
+
+    // Show warning if running locally
+    var isLocal = meetingUrl.includes('localhost') || meetingUrl.includes('127.0.0.1');
+    if (isLocal && localHint) localHint.style.display = 'block';
 
     if (container && typeof QRCode !== 'undefined') {
       new QRCode(container, {

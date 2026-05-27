@@ -644,10 +644,15 @@ document.addEventListener('DOMContentLoaded', function() {
   fetch('/api/meeting-time')
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      window.meetingStartTs = data.startTime || parseInt(localStorage.getItem('meetlingo_meeting_start')) || Date.now();
+      var ts = data.startTime || parseInt(localStorage.getItem('meetlingo_meeting_start')) || Date.now();
+      // Sanity check: ignore timestamps older than 4 hours (stale from previous session)
+      if (Date.now() - ts > 4 * 60 * 60 * 1000) ts = Date.now();
+      window.meetingStartTs = ts;
     })
     .catch(function() {
-      window.meetingStartTs = parseInt(localStorage.getItem('meetlingo_meeting_start') || Date.now());
+      var ts = parseInt(localStorage.getItem('meetlingo_meeting_start') || Date.now());
+      if (Date.now() - ts > 4 * 60 * 60 * 1000) ts = Date.now();
+      window.meetingStartTs = ts;
     });
 
   // ── Add message to chat ───────────────────────────────
