@@ -11,7 +11,12 @@ app.use(express.json({ limit: '10mb' })); // base64 WAV audio can be several MB 
 
 // ── OpenAI ───────────────────────────────────────────
 const { OpenAI } = require('openai');
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Lazy init — avoids crash on startup if env var loads after module init
+function getOpenAI() {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) throw new Error('OPENAI_API_KEY environment variable is not set');
+  return new OpenAI({ apiKey: key });
+}
 
 // ── In-memory session state ───────────────────────────
 let listenerSessions = new Map(); // sessionId → { lang, lastSeen }
@@ -112,7 +117,7 @@ app.post('/api/host-translate', express.json(), async (req, res) => {
     const stream = Readable.from(audioBuffer);
     stream.path = 'audio.wav';
 
-    const transcription = await openai.audio.transcriptions.create({
+    const transcription = await getOpenAI().audio.transcriptions.create({
       file: stream,
       model: 'whisper-1',
       language: whisperLang,  // dynamic — set by host in presenter language selector
@@ -179,7 +184,7 @@ app.post('/api/host-translate', express.json(), async (req, res) => {
 
     await Promise.all(langs.map(async (lang) => {
       try {
-        const translation = await openai.chat.completions.create({
+        const translation = await getOpenAI().chat.completions.create({
           model: 'gpt-4o-mini', max_tokens: 200, temperature: 0,
           messages: [
             { role: 'system', content: `You are a professional live interpreter. Translate the spoken text to ${lang}. Output ONLY the translated text, nothing else. Keep it natural and conversational.${contextBlock}` },
@@ -206,7 +211,7 @@ app.post('/api/translate-text', express.json(), async (req, res) => {
   const { text, targetLanguage } = req.body;
   if (!text || !targetLanguage) return res.json({ success: false });
   try {
-    const result = await openai.chat.completions.create({
+    const result = await getOpenAI().chat.completions.create({
       model: 'gpt-4o-mini', max_tokens: 500, temperature: 0,
       messages: [
         { role: 'system', content: `Translate the following text to ${targetLanguage}. Output ONLY the translated text. Preserve line breaks and formatting. No explanations.` },
