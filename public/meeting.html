@@ -434,10 +434,16 @@
                 if (elapsed < 0) elapsed = 0;
                 el.textContent = String(Math.floor(elapsed/60)).padStart(2,'0') + ':' + String(elapsed%60).padStart(2,'0');
             }
-            // Host ended?
-            if (!hostEndedShown && localStorage.getItem('meetlingo_meeting_active') !== 'true' && localStorage.getItem('meetlingo_meeting_end')) {
-                hostEndedShown = true;
-                showHostEndedOverlay();
+            // Host ended? — check via server (localStorage-only check doesn't work across devices)
+            if (!hostEndedShown) {
+                fetch('/api/meeting-status')
+                  .then(function(r) { return r.json(); })
+                  .then(function(d) {
+                    if (!d.active && !hostEndedShown) {
+                      hostEndedShown = true;
+                      showHostEndedOverlay();
+                    }
+                  }).catch(function(){});
             }
         }, 1000);
     })();

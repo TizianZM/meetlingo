@@ -125,6 +125,14 @@ async function processAudio() {
       body:    JSON.stringify(body)
     });
 
+    if (!response.ok) {
+      console.error('[Translation] HTTP', response.status, response.statusText);
+      if (window.ML_HOST_MODE && typeof window.onTranslateError === 'function') {
+        window.onTranslateError('HTTP ' + response.status);
+      }
+      return;
+    }
+
     const result = await response.json();
 
     // Hide indicators
