@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MeetLingo - Host View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                "colors": {
+                    "secondary": "#7b582a",
+                    "on-tertiary-fixed": "#1b1c1c",
+                    "on-tertiary-container": "#fefcfc",
+                    "on-primary": "#ffffff",
+                    "outline": "#817569",
+                    "inverse-primary": "#a8d635",
+                    "primary-fixed-dim": "#a8d635",
+                    "primary": "#4b6400",
+                    "on-error": "#ffffff",
+                    "on-secondary-container": "#795629",
+                    "on-background": "#1a1c1c",
+                    "outline-variant": "#d3c4b6",
+                    "tertiary-container": "#757474",
+                    "surface-variant": "#e2e2e2",
+                    "on-surface-variant": "#4f453a",
+                    "surface-container-low": "#f4f3f3",
+                    "surface-tint": "#4d6700",
+                    "on-primary-fixed": "#151f00",
+                    "surface-dim": "#dadada",
+                    "on-tertiary": "#ffffff",
+                    "inverse-surface": "#2f3131",
+                    "tertiary": "#5c5c5c",
+                    "surface-container": "#eeeeee",
+                    "on-tertiary-fixed-variant": "#464747",
+                    "background": "#f9f9f9",
+                    "inverse-on-surface": "#f1f1f1",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e8e8e8",
+                    "on-error-container": "#93000a",
+                    "error-container": "#ffdad6",
+                    "on-primary-container": "#fbffe6",
+                    "secondary-fixed": "#ffddb8",
+                    "on-secondary-fixed-variant": "#604015",
+                    "surface": "#f9f9f9",
+                    "error": "#ba1a1a",
+                    "secondary-container": "#ffcf97",
+                    "tertiary-fixed-dim": "#c8c6c6",
+                    "surface-container-highest": "#e2e2e2",
+                    "on-surface": "#1a1c1c",
+                    "on-secondary-fixed": "#2a1700",
+                    "on-secondary": "#ffffff",
+                    "tertiary-fixed": "#e4e2e2",
+                    "primary-container": "#5f7f00",
+                    "surface-bright": "#f9f9f9",
+                    "on-primary-fixed-variant": "#394d00",
+                    "primary-fixed": "#c4f351",
+                    "secondary-fixed-dim": "#edbe88",
+                    "brand-green": "#95C11E",
+                    "brand-accent": "#A77F4E"
+                },
+                "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "9999px"
+                },
+                "spacing": {
+                    "lg": "48px",
+                    "xs": "4px",
+                    "margin-mobile": "16px",
+                    "sm": "12px",
+                    "base": "8px",
+                    "md": "24px",
+                    "xl": "80px",
+                    "container-max": "1200px",
+                    "gutter": "24px"
+                },
+                "fontFamily": {
+                    "headline-xl": ["Source Sans 3"],
+                    "headline-lg-mobile": ["Source Sans 3"],
+                    "caption": ["Source Sans 3"],
+                    "headline-lg": ["Source Sans 3"],
+                    "headline-md": ["Source Sans 3"],
+                    "body-lg": ["Source Sans 3"],
+                    "body-md": ["Source Sans 3"],
+                    "label-md": ["Source Sans 3"]
+                },
+                "fontSize": {
+                    "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                }
+            },
+        },
+    }
+</script>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    body {
+        font-family: 'Source Sans 3', sans-serif;
+        min-height: max(884px, 100dvh);
+    }
+
+    /* Mic button idle pulse ring */
+    @keyframes mic-ring {
+        0%   { transform: scale(1);   opacity: 0.5; }
+        70%  { transform: scale(1.55); opacity: 0; }
+        100% { transform: scale(1.55); opacity: 0; }
+    }
+    .mic-ring {
+        animation: mic-ring 2s ease-out infinite;
+    }
+    .mic-ring-2 {
+        animation: mic-ring 2s ease-out 0.6s infinite;
+    }
+
+    /* Live recording pulse */
+    @keyframes live-dot {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.2; }
+    }
+    .live-dot {
+        animation: live-dot 1.2s ease-in-out infinite;
+    }
+
+    @keyframes mic-pulse { 0%{box-shadow:0 0 0 0 rgba(224,48,48,0.5)} 70%{box-shadow:0 0 0 16px rgba(224,48,48,0)} 100%{box-shadow:0 0 0 0 rgba(224,48,48,0)} }
+    .mic-active { animation: mic-pulse 1s infinite; }
+
+    /* Guests counter shimmer */
+    @keyframes count-pop {
+        0%   { transform: scale(1); }
+        50%  { transform: scale(1.12); }
+        100% { transform: scale(1); }
+    }
+    .count-pop {
+        animation: count-pop 0.4s ease;
+    }
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+
+<!-- ── TopAppBar ── -->
+<header class="w-full h-[56px] sticky top-0 bg-white border-b border-[#EEEEEE] flex justify-between items-center px-4 z-50">
+    <div class="flex-1 flex items-center">
+        <a href="index.html" class="flex items-center justify-center hover:opacity-70 transition-opacity" id="back-arrow">
+            <span class="material-symbols-outlined text-[#555555]">arrow_back</span>
+        </a>
+    </div>
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-baseline gap-1">
+        <span class="font-bold text-[18px] text-[#95C11E] leading-none">MeetLingo</span>
+        <span class="text-[11px] text-[#A77F4E] leading-none">by ZIMM</span>
+    </div>
+    <div class="flex-1 flex justify-end">
+        <div class="bg-[#EEEEEE] px-3 py-1 rounded-full">
+            <span class="text-[14px] font-medium text-[#555555]" id="host-timer">24:59</span>
+        </div>
+    </div>
+</header>
+
+<!-- ── Active Meeting View (hidden until START) ── -->
+<div id="host-active-view" style="display:none;flex-direction:column;align-items:center;gap:16px;padding:24px 16px;max-width:500px;margin:0 auto;width:100%;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;">
+    <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:20px;text-align:center;">
+      <span class="material-symbols-outlined" style="color:#95C11E;font-size:28px;font-variation-settings:'FILL' 1;">group</span>
+      <div style="font-size:28px;font-weight:700;color:#1a1c1c;" id="active-guest-count">0</div>
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Listeners</div>
+    </div>
+    <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:20px;text-align:center;">
+      <button id="active-mute-btn" style="background:#e03030;border:none;border-radius:50%;width:52px;height:52px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;">
+        <span id="active-mute-icon" class="material-symbols-outlined" style="color:#fff;font-size:26px;font-variation-settings:'FILL' 1;">mic</span>
+      </button>
+      <div id="active-mute-label" style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Live</div>
+    </div>
+  </div>
+  <div style="background:#fff;border:1px solid #eee;border-radius:12px;width:100%;overflow:hidden;">
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fafafa;border-bottom:1px solid #f0f0f0;">
+      <span class="material-symbols-outlined" style="color:#95C11E;font-size:18px;">transcribe</span>
+      <span style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.07em;">Live Transcription</span>
+      <span id="active-rec-dot" style="margin-left:auto;font-size:11px;color:#95C11E;font-weight:600;">● Recording</span>
+    </div>
+    <div id="active-transcript" style="padding:12px 16px;min-height:100px;max-height:200px;overflow-y:auto;">
+      <p id="active-placeholder" style="color:#aaa;font-size:14px;font-style:italic;">Start speaking...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main Content ── -->
+<main id="host-setup-view" class="flex-grow flex flex-col items-center px-margin-mobile pt-8 pb-36 gap-8 max-w-2xl mx-auto w-full">
+
+    <!-- HOST BADGE -->
+    <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[#A77F4E] text-[20px]">shield_person</span>
+        <span class="text-label-md uppercase tracking-widest text-[#A77F4E] font-bold">Presenter View</span>
+    </div>
+
+    <!-- ── PRESENTER LANGUAGE ── -->
+    <div class="w-full bg-white border border-surface-container rounded-xl p-5 shadow-sm">
+        <div class="flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined text-[#95C11E] text-[20px]">mic</span>
+            <span class="text-label-md uppercase tracking-widest text-[#555555] font-bold">Presenter Language</span>
+        </div>
+        <p class="text-caption text-tertiary mb-3">The language <em>you</em> speak — used by Whisper for transcription.</p>
+        <select id="host-lang-select" style="width:100%;padding:10px 14px;border:1.5px solid #EEEEEE;border-radius:10px;font-size:15px;font-family:'Source Sans 3',sans-serif;color:#1a1c1c;background:white;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><path fill=%22%23888%22 d=%22M7 10l5 5 5-5z%22/></svg>');background-repeat:no-repeat;background-position:right 12px center;background-size:20px;cursor:pointer;">
+            <option value="de">🇩🇪 German — Deutsch</option>
+            <option value="en">🇬🇧 English</option>
+            <option value="fr">🇫🇷 French — Français</option>
+            <option value="es">🇪🇸 Spanish — Español</option>
+            <option value="it">🇮🇹 Italian — Italiano</option>
+            <option value="pt">🇵🇹 Portuguese — Português</option>
+            <option value="nl">🇳🇱 Dutch — Nederlands</option>
+            <option value="pl">🇵🇱 Polish — Polski</option>
+            <option value="ru">🇷🇺 Russian — Русский</option>
+            <option value="tr">🇹🇷 Turkish — Türkçe</option>
+            <option value="ja">🇯🇵 Japanese — 日本語</option>
+            <option value="zh">🇨🇳 Chinese — 中文</option>
+        </select>
+    </div>
+
+    <!-- ── EDITABLE AGENDA ── -->
+    <div class="w-full bg-white border border-surface-container rounded-xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#95C11E] text-[20px]">edit_note</span>
+                <span class="text-label-md uppercase tracking-widest text-[#555555] font-bold">Meeting Agenda</span>
+            </div>
+            <span class="text-caption text-[#95C11E] font-bold" id="agenda-saved-label" style="opacity:0;transition:opacity 0.4s;">Saved ✓</span>
+        </div>
+        <textarea
+            id="agenda-input"
+            rows="4"
+            placeholder="Enter agenda items here...&#10;1. Topic one&#10;2. Topic two&#10;3. Topic three"
+            class="w-full text-body-md text-on-surface bg-surface-container-low rounded-lg p-3 border border-outline-variant resize-none focus:outline-none focus:border-[#95C11E] transition-colors"
+            style="font-family: 'Source Sans 3', sans-serif; font-size: 15px; line-height: 1.6;"
+        ></textarea>
+        <div class="flex items-center justify-between mt-3">
+            <p class="text-caption text-tertiary">Guests see this agenda after you save.</p>
+            <button id="agenda-save-btn" class="flex items-center gap-1 bg-[#95C11E] text-white text-label-md font-bold px-4 py-1.5 rounded-lg hover:opacity-90 active:scale-95 transition-all text-[13px]">
+                <span class="material-symbols-outlined text-[16px]">save</span> Save
+            </button>
+        </div>
+    </div>
+
+    <!-- ── STATS ROW ── -->
+    <div class="grid grid-cols-2 gap-4 w-full">
+
+        <!-- Connected Guests Counter -->
+        <div class="bg-white border border-surface-container rounded-xl p-5 flex flex-col items-center text-center shadow-sm">
+            <span class="material-symbols-outlined text-[#95C11E] text-[28px] mb-2" style="font-variation-settings: 'FILL' 1;">group</span>
+            <span class="text-headline-lg font-bold text-on-background" id="guest-count">0</span>
+            <span class="text-caption text-tertiary uppercase tracking-widest mt-1">Connected Guests</span>
+        </div>
+
+        <!-- Meeting duration -->
+        <div class="bg-white border border-surface-container rounded-xl p-5 flex flex-col items-center text-center shadow-sm">
+            <span class="material-symbols-outlined text-[#A77F4E] text-[28px] mb-2" style="font-variation-settings: 'FILL' 1;">schedule</span>
+            <span class="text-headline-lg font-bold text-on-background" id="duration-display">00:00</span>
+            <span class="text-caption text-tertiary uppercase tracking-widest mt-1">Duration</span>
+        </div>
+
+    </div>
+
+    <!-- ── LANGUAGE BREAKDOWN CARDS ── -->
+    <div class="w-full">
+        <h2 class="text-label-md uppercase tracking-widest text-tertiary font-bold mb-3">Languages Connected</h2>
+        <div class="flex flex-col gap-2" id="lang-breakdown">
+            <p style="color:#aaa;font-size:14px;font-style:italic;text-align:center;padding:16px 0;">No guests connected yet</p>
+        </div>
+    </div>
+
+    <!-- ── QR CODE CARD ── -->
+    <div class="w-full bg-white border border-surface-container rounded-xl p-6 flex flex-col items-center shadow-sm">
+        <h2 class="text-label-md uppercase tracking-widest text-tertiary font-bold mb-4">Share Meeting QR</h2>
+        <!-- Real QR code rendered here by qrcode.js -->
+        <div id="qr-container" class="mb-3 flex items-center justify-center" style="width:160px;height:160px;"></div>
+        <p class="text-caption text-tertiary mb-1">Guests scan this to join</p>
+        <p id="qr-url" class="text-caption text-[#95C11E] font-medium break-all text-center" style="font-size:11px;max-width:220px;"></p>
+    </div>
+
+</main>
+
+<!-- ── START / END MEETING sticky footer ── -->
+<div class="fixed bottom-0 left-0 w-full px-margin-mobile pb-6 pt-4 bg-gradient-to-t from-background via-background to-transparent">
+    <button
+        id="main-action-btn"
+        class="w-full h-[56px] rounded-full flex items-center justify-center gap-2 font-bold text-white text-[16px] tracking-wide shadow-lg hover:brightness-110 active:scale-[0.98] transition-all"
+        style="background-color: #95C11E;"
+    >
+        <span class="material-symbols-outlined text-white text-[22px]" id="main-action-icon" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+        <span id="main-action-label">START TRANSLATION</span>
+    </button>
+</div>
+
+<!-- ── Confirmation Modal ── -->
+<div id="host-confirm-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:300; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:white; border-radius:20px; padding:28px 24px; max-width:320px; width:100%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div id="host-confirm-icon" style="width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;">▶</div>
+        <p id="host-confirm-title" style="font-size:18px;font-weight:700;color:#1A1A1A;margin-bottom:8px;"></p>
+        <p id="host-confirm-sub" style="font-size:14px;color:#666;margin-bottom:24px;"></p>
+        <div style="display:flex;gap:12px;">
+            <button id="host-confirm-cancel" style="flex:1;padding:14px;border-radius:12px;border:2px solid #EEEEEE;font-weight:600;font-size:15px;color:#555;background:white;cursor:pointer;">Cancel</button>
+            <button id="host-confirm-ok" style="flex:1;padding:14px;border-radius:12px;font-weight:700;font-size:15px;color:white;background:#95C11E;cursor:pointer;">Start</button>
+        </div>
+    </div>
+</div>
+
+<!-- Decorative background blobs -->
+<div class="fixed top-0 right-0 pointer-events-none opacity-10">
+    <div class="w-64 h-64 bg-[#95C11E] blur-[100px] rounded-full"></div>
+</div>
+<div class="fixed bottom-0 left-0 pointer-events-none opacity-10">
+    <div class="w-80 h-80 bg-[#A77F4E] blur-[120px] rounded-full"></div>
+</div>
+
+<script>
+    // Clear leftover session data + reset server queue
+    localStorage.removeItem('meetlingo_meeting_active');
+    localStorage.removeItem('meetlingo_meeting_start');
+    localStorage.removeItem('meetlingo_meeting_end');
+    fetch('/api/reset-session', { method: 'POST' });
+
+    var sessionStarted = false;
+    var timerInterval  = null;
+
+    // ── Refs ──────────────────────────────────────
+    var actionBtn   = document.getElementById('main-action-btn');
+    var actionIcon  = document.getElementById('main-action-icon');
+    var actionLabel = document.getElementById('main-action-label');
+    var timerEl     = document.getElementById('host-timer');
+    var durationEl  = document.getElementById('duration-display');
+    var modal       = document.getElementById('host-confirm-modal');
+    var confirmOk   = document.getElementById('host-confirm-ok');
+    var confirmCancel = document.getElementById('host-confirm-cancel');
+    var confirmTitle  = document.getElementById('host-confirm-title');
+    var confirmSub    = document.getElementById('host-confirm-sub');
+    var confirmIcon   = document.getElementById('host-confirm-icon');
+
+    // ── Timer zeigt --:-- bis gestartet ──────────
+    if (timerEl)   timerEl.textContent   = '--:--';
+    if (durationEl) durationEl.textContent = '--:--';
+
+    function fmt(sec) {
+        return String(Math.floor(sec/60)).padStart(2,'0') + ':' + String(sec%60).padStart(2,'0');
+    }
+
+    function startTimer() {
+        var timerStart = Date.now();
+        localStorage.setItem('meetlingo_meeting_start', timerStart.toString());
+        localStorage.setItem('meetlingo_meeting_active', 'true');
+        localStorage.removeItem('meetlingo_meeting_end');
+        clearInterval(timerInterval);
+        timerInterval = setInterval(function() {
+            var elapsed = Math.floor((Date.now() - timerStart) / 1000);
+            var text = fmt(elapsed);
+            if (timerEl)    timerEl.textContent    = text;
+            if (durationEl) durationEl.textContent = text;
+        }, 1000);
+    }
+
+    // ── Confirmation Modal helpers ────────────────
+    var pendingAction = null;
+
+    function showConfirm(title, sub, okLabel, okColor, action) {
+        confirmTitle.textContent = title;
+        confirmSub.textContent   = sub;
+        confirmOk.textContent    = okLabel;
+        confirmOk.style.background = okColor;
+        pendingAction = action;
+        modal.style.display = 'flex';
+    }
+
+    confirmOk.addEventListener('click', function() {
+        modal.style.display = 'none';
+        if (pendingAction) pendingAction();
+        pendingAction = null;
+    });
+    confirmCancel.addEventListener('click', function() {
+        modal.style.display = 'none';
+        pendingAction = null;
+    });
+
+    // ── START / END Button ────────────────────────
+    actionBtn.addEventListener('click', function() {
+        if (!sessionStarted) {
+            showConfirm(
+                'Start Translation?',
+                'Guests will start receiving live translations.',
+                'Start', '#95C11E',
+                function() {
+                    sessionStarted = true;
+                    startTimer();
+                    fetch('/api/meeting-start', { method: 'POST' }); // signal server
+                    startTranslation(); // ← directly in user gesture chain
+
+                    // Switch to active view
+                    document.getElementById('host-setup-view').style.display = 'none';
+                    document.getElementById('host-active-view').style.display = 'flex';
+
+                    actionBtn.style.backgroundColor = '#FF4444';
+                    actionIcon.textContent = 'call_end';
+                    actionLabel.textContent = 'END MEETING';
+                }
+            );
+        } else {
+            showConfirm(
+                'End Meeting?',
+                'This will stop translation for all guests.',
+                'End Meeting', '#FF4444',
+                function() {
+                    clearInterval(timerInterval);
+                    if (window.TranslationManager) window.TranslationManager.stopTranslation();
+                    localStorage.setItem('meetlingo_meeting_end', Date.now().toString());
+                    localStorage.removeItem('meetlingo_meeting_active');
+                    window.location.href = 'confirmation.html';
+                }
+            );
+        }
+    });
+
+    // ── Mic-Knopf: Mute/Unmute während Session ───
+
+    // ── Live Listener Stats ───────────────────────
+    var LANG_FLAGS = {
+      English: '🇬🇧', German: '🇩🇪', Spanish: '🇪🇸', French: '🇫🇷',
+      Italian: '🇮🇹', Japanese: '🇯🇵', Portuguese: '🇵🇹', Turkish: '🇹🇷',
+      Dutch: '🇳🇱', Korean: '🇰🇷', Chinese: '🇨🇳', Arabic: '🇸🇦',
+      Russian: '🇷🇺', Polish: '🇵🇱', Swedish: '🇸🇪', Hindi: '🇮🇳',
+      Greek: '🇬🇷', Ukrainian: '🇺🇦'
+    };
+
+    function updateListenerStats() {
+      fetch('/api/listener-stats')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var total = data.total || 0;
+          var counts = data.counts || {};
+
+          // Update both total-listener counters (setup view + active view)
+          var gc = document.getElementById('guest-count');
+          if (gc) gc.textContent = total;
+          var agc = document.getElementById('active-guest-count');
+          if (agc) agc.textContent = total;
+
+          // Rebuild language breakdown
+          var container = document.getElementById('lang-breakdown');
+          if (!container) return;
+          var langs = Object.keys(counts).filter(function(l) { return counts[l] > 0; });
+
+          if (langs.length === 0) {
+            container.innerHTML = '<p style="color:#aaa;font-size:14px;font-style:italic;text-align:center;padding:16px 0;">No guests connected yet</p>';
+            return;
+          }
+
+          container.innerHTML = langs.sort().map(function(lang) {
+            var flag  = LANG_FLAGS[lang] || '🌐';
+            var count = counts[lang];
+            return '<div style="background:white;border:1px solid #EEEEEE;border-radius:12px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;">'
+              + '<div style="display:flex;align-items:center;gap:12px;">'
+              + '<span style="font-size:20px;">' + flag + '</span>'
+              + '<span style="font-size:15px;font-weight:600;color:#1a1c1c;">' + lang + '</span>'
+              + '</div>'
+              + '<div style="display:flex;align-items:center;gap:4px;">'
+              + '<span style="font-size:16px;font-weight:700;color:#95C11E;">' + count + '</span>'
+              + '<span style="font-size:12px;color:#888;">&nbsp;' + (count === 1 ? 'guest' : 'guests') + '</span>'
+              + '</div>'
+              + '</div>';
+          }).join('');
+        })
+        .catch(function() {});
+    }
+
+    // Poll immediately + every 3 seconds
+    updateListenerStats();
+    setInterval(updateListenerStats, 3000);
+
+    // ── Editable Agenda ─────────────────────────
+    (function() {
+        var input      = document.getElementById('agenda-input');
+        var savedLabel = document.getElementById('agenda-saved-label');
+        var saveBtn    = document.getElementById('agenda-save-btn');
+        if (!input) return;
+        var saved = localStorage.getItem('meetlingo_agenda');
+        if (saved) input.value = saved;
+
+        function doSave() {
+            localStorage.setItem('meetlingo_agenda', input.value);
+            savedLabel.style.opacity = '1';
+            setTimeout(function() { savedLabel.style.opacity = '0'; }, 1500);
+        }
+
+        // Explicit save button
+        if (saveBtn) saveBtn.addEventListener('click', doSave);
+    })();
+</script>
+
+<!-- QR Code library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  (function() {
+    // Use the server's actual URL so guests on the same network can scan and join
+    var meetingUrl = window.location.origin;
+    var container  = document.getElementById('qr-container');
+    var urlLabel   = document.getElementById('qr-url');
+
+    if (container && typeof QRCode !== 'undefined') {
+      new QRCode(container, {
+        text:         meetingUrl,
+        width:        160,
+        height:       160,
+        colorDark:    '#1A1A1A',
+        colorLight:   '#FFFFFF',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+    if (urlLabel) urlLabel.textContent = meetingUrl;
+  })();
+</script>
+
+<!-- Error toast -->
+<div id="host-error-toast" style="position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#c0392b;color:white;padding:10px 18px;border-radius:10px;font-size:14px;font-family:'Source Sans 3',sans-serif;font-weight:600;opacity:0;transition:opacity 0.4s;pointer-events:none;z-index:200;white-space:nowrap;"></div>
+
+<!-- MeetLingo scripts -->
+<script>window.ML_HOST_MODE = true;</script>
+<script src="/js/audio.js"></script>
+<script src="/js/translation.js"></script>
+<script>
+  // ── Pulse when audio detected ─────────────────────
+  var _pulseTimeout;
+  window.onAudioActivity = function() {
+    var btn = document.getElementById('active-mute-btn');
+    if (!btn || _activeMuted) return;
+    btn.classList.add('mic-active');
+    clearTimeout(_pulseTimeout);
+    _pulseTimeout = setTimeout(function() { btn.classList.remove('mic-active'); }, 800);
+  };
+
+  // ── Active view: mute toggle ──────────────────────
+  var _activeMuted = false;
+  var _activeMuteBtn = document.getElementById('active-mute-btn');
+  var _activeMuteIcon = document.getElementById('active-mute-icon');
+  var _activeMuteLabel = document.getElementById('active-mute-label');
+  if (_activeMuteBtn) {
+    _activeMuteBtn.addEventListener('click', function() {
+      _activeMuted = !_activeMuted;
+      _activeMuteBtn.style.background = _activeMuted ? '#888' : '#e03030';
+      _activeMuteIcon.textContent     = _activeMuted ? 'mic_off' : 'mic';
+      _activeMuteLabel.textContent    = _activeMuted ? 'Muted' : 'Live';
+      if (window.TranslationManager) window.TranslationManager.setMuted(_activeMuted);
+    });
+  }
+
+  // ── Active view: live transcription callback ──────
+  var _txEntries = [];
+  window.onTranscript = function(text) {
+    if (!text || !text.trim()) return;
+    var box = document.getElementById('active-transcript');
+    var ph  = document.getElementById('active-placeholder');
+    if (!box) return;
+    if (ph) ph.style.display = 'none';
+    _txEntries.push(text);
+    if (_txEntries.length > 30) _txEntries.shift();
+    box.innerHTML = _txEntries.map(function(t) {
+      return '<p style="font-size:14px;color:#1a1c1c;padding:3px 0;border-bottom:1px solid #f5f5f5;margin:0;">' + t + '</p>';
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  };
+
+  // ── Presenter language selector ───────────────────
+  (function() {
+    var sel = document.getElementById('host-lang-select');
+    if (!sel) return;
+    var saved = localStorage.getItem('meetlingo_host_lang') || 'de';
+    sel.value = saved;
+    window.ML_HOST_LANG = saved;
+    sel.addEventListener('change', function() {
+      localStorage.setItem('meetlingo_host_lang', sel.value);
+      window.ML_HOST_LANG = sel.value;
+    });
+  })();
+
+  // ── API error toast ───────────────────────────────
+  window.onTranslateError = function(msg) {
+    var toast = document.getElementById('host-error-toast');
+    if (!toast) return;
+    toast.textContent = '⚠️ ' + (msg || 'Translation error');
+    toast.style.opacity = '1';
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(function() { toast.style.opacity = '0'; }, 4000);
+  };
+</script>
+</body></html>

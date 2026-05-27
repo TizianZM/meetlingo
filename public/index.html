@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MeetLingo - Welcome</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                "colors": {
+                    "secondary": "#7b582a",
+                    "on-tertiary-fixed": "#1b1c1c",
+                    "on-tertiary-container": "#fefcfc",
+                    "on-primary": "#ffffff",
+                    "outline": "#817569",
+                    "inverse-primary": "#a8d635",
+                    "primary-fixed-dim": "#a8d635",
+                    "primary": "#4b6400",
+                    "on-error": "#ffffff",
+                    "on-secondary-container": "#795629",
+                    "on-background": "#1a1c1c",
+                    "outline-variant": "#d3c4b6",
+                    "tertiary-container": "#757474",
+                    "surface-variant": "#e2e2e2",
+                    "on-surface-variant": "#4f453a",
+                    "surface-container-low": "#f4f3f3",
+                    "surface-tint": "#4d6700",
+                    "on-primary-fixed": "#151f00",
+                    "surface-dim": "#dadada",
+                    "on-tertiary": "#ffffff",
+                    "inverse-surface": "#2f3131",
+                    "tertiary": "#5c5c5c",
+                    "surface-container": "#eeeeee",
+                    "on-tertiary-fixed-variant": "#464747",
+                    "background": "#f9f9f9",
+                    "inverse-on-surface": "#f1f1f1",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e8e8e8",
+                    "on-error-container": "#93000a",
+                    "error-container": "#ffdad6",
+                    "on-primary-container": "#fbffe6",
+                    "secondary-fixed": "#ffddb8",
+                    "on-secondary-fixed-variant": "#604015",
+                    "surface": "#f9f9f9",
+                    "error": "#ba1a1a",
+                    "secondary-container": "#ffcf97",
+                    "tertiary-fixed-dim": "#c8c6c6",
+                    "surface-container-highest": "#e2e2e2",
+                    "on-surface": "#1a1c1c",
+                    "on-secondary-fixed": "#2a1700",
+                    "on-secondary": "#ffffff",
+                    "tertiary-fixed": "#e4e2e2",
+                    "primary-container": "#5f7f00",
+                    "surface-bright": "#f9f9f9",
+                    "on-primary-fixed-variant": "#394d00",
+                    "primary-fixed": "#c4f351",
+                    "secondary-fixed-dim": "#edbe88",
+                    "brand-green": "#95C11E",
+                    "brand-accent": "#A77F4E"
+                },
+                "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+                },
+                "spacing": {
+                    "lg": "48px",
+                    "xs": "4px",
+                    "margin-mobile": "16px",
+                    "sm": "12px",
+                    "base": "8px",
+                    "md": "24px",
+                    "xl": "80px",
+                    "container-max": "1200px",
+                    "gutter": "24px"
+                },
+                "fontFamily": {
+                    "headline-xl": ["Source Sans 3"],
+                    "headline-lg-mobile": ["Source Sans 3"],
+                    "caption": ["Source Sans 3"],
+                    "headline-lg": ["Source Sans 3"],
+                    "headline-md": ["Source Sans 3"],
+                    "body-lg": ["Source Sans 3"],
+                    "body-md": ["Source Sans 3"],
+                    "label-md": ["Source Sans 3"]
+                },
+                "fontSize": {
+                    "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                }
+            },
+        },
+    }
+</script>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    body {
+        font-family: 'Source Sans 3', sans-serif;
+        min-height: max(884px, 100dvh);
+    }
+    @keyframes qr-pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.85; transform: scale(0.98); }
+    }
+    .qr-pulse {
+        animation: qr-pulse 2.5s ease-in-out infinite;
+    }
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+
+<!-- TopAppBar -->
+<header class="w-full h-[56px] sticky top-0 bg-white border-b border-[#EEEEEE] flex justify-between items-center px-4 z-50">
+<div class="flex-1 flex items-center">
+<!-- No back arrow on welcome screen -->
+</div>
+<div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-baseline gap-1">
+<span class="font-bold text-[18px] text-[#95C11E] leading-none">MeetLingo</span>
+<span class="text-[11px] text-[#A77F4E] leading-none">by ZIMM</span>
+</div>
+<div class="flex-1 flex justify-end">
+<div class="bg-[#EEEEEE] px-3 py-1 rounded-full">
+<span class="text-[14px] font-medium text-[#555555]">--:--</span>
+</div>
+</div>
+</header>
+
+<!-- Main Content -->
+<main class="flex-grow flex flex-col items-center justify-center px-margin-mobile py-lg gap-8">
+
+<!-- Welcome Heading -->
+<div class="text-center">
+<h1 class="text-headline-lg-mobile font-bold text-on-background mb-2">Join a Meeting</h1>
+<p class="text-body-md text-tertiary">Scan the QR code or tap your language flag to continue</p>
+</div>
+
+<!-- QR Code Card -->
+<div class="bg-white border border-surface-container rounded-xl p-8 flex flex-col items-center shadow-sm w-full max-w-[320px] qr-pulse">
+<!-- QR Code Placeholder SVG -->
+<div class="w-[180px] h-[180px] mb-4 relative">
+<svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+<!-- Corner squares -->
+<rect x="10" y="10" width="50" height="50" rx="4" fill="none" stroke="#1A1A1A" stroke-width="6"/>
+<rect x="20" y="20" width="30" height="30" rx="2" fill="#95C11E"/>
+<rect x="120" y="10" width="50" height="50" rx="4" fill="none" stroke="#1A1A1A" stroke-width="6"/>
+<rect x="130" y="20" width="30" height="30" rx="2" fill="#95C11E"/>
+<rect x="10" y="120" width="50" height="50" rx="4" fill="none" stroke="#1A1A1A" stroke-width="6"/>
+<rect x="20" y="130" width="30" height="30" rx="2" fill="#95C11E"/>
+<!-- Data dots pattern -->
+<rect x="75" y="10" width="8" height="8" fill="#1A1A1A"/>
+<rect x="87" y="10" width="8" height="8" fill="#1A1A1A"/>
+<rect x="99" y="10" width="8" height="8" fill="#1A1A1A"/>
+<rect x="75" y="22" width="8" height="8" fill="#1A1A1A"/>
+<rect x="99" y="22" width="8" height="8" fill="#1A1A1A"/>
+<rect x="75" y="34" width="8" height="8" fill="#1A1A1A"/>
+<rect x="87" y="34" width="8" height="8" fill="#1A1A1A"/>
+<rect x="99" y="34" width="8" height="8" fill="#1A1A1A"/>
+<rect x="75" y="46" width="8" height="8" fill="#1A1A1A"/>
+<rect x="99" y="46" width="8" height="8" fill="#1A1A1A"/>
+<rect x="10" y="75" width="8" height="8" fill="#1A1A1A"/>
+<rect x="22" y="75" width="8" height="8" fill="#1A1A1A"/>
+<rect x="34" y="75" width="8" height="8" fill="#1A1A1A"/>
+<rect x="46" y="75" width="8" height="8" fill="#1A1A1A"/>
+<rect x="75" y="75" width="8" height="8" fill="#1A1A1A"/>
+<rect x="87" y="75" width="8" height="8" fill="#1A1A1A"/>
+<rect x="99" y="75" width="8" height="8" fill="#1A1A1A"/>
+<rect x="111" y="75" width="8" height="8" fill="#1A1A1A"/>
+<rect x="123" y="75" width="8" height="8" fill="#1A1A1A"/>
+<rect x="147" y="75" width="8" height="8" fill="#1A1A1A"/>
+<rect x="159" y="75" width="8" height="8" fill="#1A1A1A"/>
+<rect x="10" y="87" width="8" height="8" fill="#1A1A1A"/>
+<rect x="34" y="87" width="8" height="8" fill="#1A1A1A"/>
+<rect x="87" y="87" width="8" height="8" fill="#1A1A1A"/>
+<rect x="111" y="87" width="8" height="8" fill="#1A1A1A"/>
+<rect x="135" y="87" width="8" height="8" fill="#1A1A1A"/>
+<rect x="159" y="87" width="8" height="8" fill="#1A1A1A"/>
+<rect x="10" y="99" width="8" height="8" fill="#1A1A1A"/>
+<rect x="22" y="99" width="8" height="8" fill="#1A1A1A"/>
+<rect x="46" y="99" width="8" height="8" fill="#1A1A1A"/>
+<rect x="75" y="99" width="8" height="8" fill="#1A1A1A"/>
+<rect x="99" y="99" width="8" height="8" fill="#1A1A1A"/>
+<rect x="123" y="99" width="8" height="8" fill="#1A1A1A"/>
+<rect x="147" y="99" width="8" height="8" fill="#1A1A1A"/>
+<rect x="75" y="123" width="8" height="8" fill="#1A1A1A"/>
+<rect x="87" y="123" width="8" height="8" fill="#1A1A1A"/>
+<rect x="111" y="123" width="8" height="8" fill="#1A1A1A"/>
+<rect x="135" y="123" width="8" height="8" fill="#1A1A1A"/>
+<rect x="159" y="123" width="8" height="8" fill="#1A1A1A"/>
+<rect x="75" y="135" width="8" height="8" fill="#1A1A1A"/>
+<rect x="99" y="135" width="8" height="8" fill="#1A1A1A"/>
+<rect x="123" y="135" width="8" height="8" fill="#1A1A1A"/>
+<rect x="147" y="135" width="8" height="8" fill="#1A1A1A"/>
+<rect x="75" y="147" width="8" height="8" fill="#1A1A1A"/>
+<rect x="87" y="147" width="8" height="8" fill="#1A1A1A"/>
+<rect x="111" y="147" width="8" height="8" fill="#1A1A1A"/>
+<rect x="135" y="147" width="8" height="8" fill="#1A1A1A"/>
+<rect x="159" y="147" width="8" height="8" fill="#1A1A1A"/>
+<rect x="75" y="159" width="8" height="8" fill="#1A1A1A"/>
+<rect x="99" y="159" width="8" height="8" fill="#1A1A1A"/>
+<rect x="123" y="159" width="8" height="8" fill="#1A1A1A"/>
+<rect x="147" y="159" width="8" height="8" fill="#1A1A1A"/>
+</svg>
+</div>
+<p class="text-caption text-tertiary uppercase tracking-widest">Scan to join</p>
+</div>
+
+<!-- Divider -->
+<div class="flex items-center gap-4 w-full max-w-[320px]">
+<div class="flex-1 h-px bg-surface-container"></div>
+<span class="text-caption text-tertiary uppercase tracking-widest">or choose language</span>
+<div class="flex-1 h-px bg-surface-container"></div>
+</div>
+
+<!-- Language Flag Grid — Top 6 -->
+<div class="grid grid-cols-3 gap-3 w-full max-w-[320px]">
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="English">
+    <span class="text-2xl mb-1">🇬🇧</span>
+    <span class="text-caption text-tertiary font-semibold">EN</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="German">
+    <span class="text-2xl mb-1">🇩🇪</span>
+    <span class="text-caption text-tertiary font-semibold">DE</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Spanish">
+    <span class="text-2xl mb-1">🇪🇸</span>
+    <span class="text-caption text-tertiary font-semibold">ES</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="French">
+    <span class="text-2xl mb-1">🇫🇷</span>
+    <span class="text-caption text-tertiary font-semibold">FR</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Italian">
+    <span class="text-2xl mb-1">🇮🇹</span>
+    <span class="text-caption text-tertiary font-semibold">IT</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Japanese">
+    <span class="text-2xl mb-1">🇯🇵</span>
+    <span class="text-caption text-tertiary font-semibold">JP</span>
+  </button>
+</div>
+
+<!-- More Languages Toggle -->
+<button id="more-langs-btn" class="flex items-center gap-2 text-[#95C11E] font-semibold text-sm hover:opacity-80 transition-opacity mt-1">
+  <span class="material-symbols-outlined text-[18px]" id="more-langs-icon">add_circle</span>
+  <span id="more-langs-label">More languages</span>
+</button>
+
+<!-- Extended Language Grid (hidden by default) -->
+<div id="more-langs-grid" style="display:none;" class="grid grid-cols-3 gap-3 w-full max-w-[320px]">
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Portuguese">
+    <span class="text-2xl mb-1">🇵🇹</span>
+    <span class="text-caption text-tertiary font-semibold">PT</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Turkish">
+    <span class="text-2xl mb-1">🇹🇷</span>
+    <span class="text-caption text-tertiary font-semibold">TR</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Dutch">
+    <span class="text-2xl mb-1">🇳🇱</span>
+    <span class="text-caption text-tertiary font-semibold">NL</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Korean">
+    <span class="text-2xl mb-1">🇰🇷</span>
+    <span class="text-caption text-tertiary font-semibold">KO</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Chinese">
+    <span class="text-2xl mb-1">🇨🇳</span>
+    <span class="text-caption text-tertiary font-semibold">ZH</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Arabic">
+    <span class="text-2xl mb-1">🇸🇦</span>
+    <span class="text-caption text-tertiary font-semibold">AR</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Russian">
+    <span class="text-2xl mb-1">🇷🇺</span>
+    <span class="text-caption text-tertiary font-semibold">RU</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Polish">
+    <span class="text-2xl mb-1">🇵🇱</span>
+    <span class="text-caption text-tertiary font-semibold">PL</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Swedish">
+    <span class="text-2xl mb-1">🇸🇪</span>
+    <span class="text-caption text-tertiary font-semibold">SV</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Hindi">
+    <span class="text-2xl mb-1">🇮🇳</span>
+    <span class="text-caption text-tertiary font-semibold">HI</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Greek">
+    <span class="text-2xl mb-1">🇬🇷</span>
+    <span class="text-caption text-tertiary font-semibold">EL</span>
+  </button>
+  <button class="flag-btn flex flex-col items-center justify-center bg-white border border-surface-container rounded-xl p-3 hover:border-[#95C11E] hover:shadow-sm transition-all active:scale-95" data-lang="Ukrainian">
+    <span class="text-2xl mb-1">🇺🇦</span>
+    <span class="text-caption text-tertiary font-semibold">UK</span>
+  </button>
+</div>
+
+<!-- Host link -->
+<p class="text-caption text-tertiary">
+Are you the presenter? <a href="host.html" class="text-[#95C11E] font-semibold underline">Open Host View →</a>
+</p>
+
+</main>
+
+<script>
+    // More languages toggle
+    var moreLangsOpen = false;
+    document.getElementById('more-langs-btn').addEventListener('click', function() {
+        moreLangsOpen = !moreLangsOpen;
+        document.getElementById('more-langs-grid').style.display = moreLangsOpen ? 'grid' : 'none';
+        document.getElementById('more-langs-icon').textContent  = moreLangsOpen ? 'remove_circle' : 'add_circle';
+        document.getElementById('more-langs-label').textContent = moreLangsOpen ? 'Show less' : 'More languages';
+    });
+
+    // Flag buttons → save language + go to login
+    document.querySelectorAll('.flag-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            localStorage.setItem('meetlingo_lang', btn.dataset.lang);
+            window.location.href = 'login.html';
+        });
+    });
+</script>
+
+<!-- Bottom accent line -->
+<div class="fixed bottom-0 left-0 w-full h-1 bg-[#95C11E] opacity-20"></div>
+
+<!-- Decorative background blobs -->
+<div class="fixed top-0 right-0 pointer-events-none opacity-10">
+<div class="w-64 h-64 bg-[#95C11E] blur-[100px] rounded-full"></div>
+</div>
+<div class="fixed bottom-0 left-0 pointer-events-none opacity-10">
+<div class="w-80 h-80 bg-[#A77F4E] blur-[120px] rounded-full"></div>
+</div>
+
+</body></html>

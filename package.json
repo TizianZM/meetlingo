@@ -1,0 +1,13 @@
+{
+  "name": "meetlingo",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "openai": "^6.38.0",
+    "ws": "^8.14.2"
+  }
+}

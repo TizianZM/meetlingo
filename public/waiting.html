@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Waiting - MeetLingo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "secondary": "#7b582a",
+          "on-primary": "#ffffff",
+          "outline": "#817569",
+          "primary": "#4b6400",
+          "on-background": "#1a1c1c",
+          "outline-variant": "#d3c4b6",
+          "surface-variant": "#e2e2e2",
+          "on-surface-variant": "#4f453a",
+          "surface-container-low": "#f4f3f3",
+          "surface-dim": "#dadada",
+          "tertiary": "#5c5c5c",
+          "surface-container": "#eeeeee",
+          "background": "#f9f9f9",
+          "surface-container-lowest": "#ffffff",
+          "surface-container-high": "#e8e8e8",
+          "on-surface": "#1a1c1c",
+          "surface": "#f9f9f9",
+          "surface-container-highest": "#e2e2e2",
+          "surface-bright": "#f9f9f9"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "lg": "48px",
+          "xs": "4px",
+          "margin-mobile": "16px",
+          "sm": "12px",
+          "base": "8px",
+          "md": "24px",
+          "xl": "80px",
+          "container-max": "1200px"
+        },
+        "fontFamily": { "body-md": ["Source Sans 3"], "headline-md": ["Source Sans 3"], "label-md": ["Source Sans 3"] },
+        "fontSize": {
+          "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+          "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+          "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  body { font-family: 'Source Sans 3', sans-serif; min-height: max(884px, 100dvh); }
+  @keyframes pulse-ring {
+    0%   { transform: scale(0.95); opacity: 0.7; }
+    50%  { transform: scale(1.1);  opacity: 0.3; }
+    100% { transform: scale(0.95); opacity: 0.7; }
+  }
+  .pulse-ring { animation: pulse-ring 2s ease-in-out infinite; }
+  @keyframes dot-bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40%            { transform: translateY(-6px); opacity: 1; }
+  }
+  .dot { animation: dot-bounce 1.4s infinite ease-in-out; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+</style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
+
+<!-- TopAppBar -->
+<header class="w-full h-[56px] sticky top-0 bg-white border-b border-[#EEEEEE] z-50">
+  <div class="relative flex items-center justify-between w-full h-full px-margin-mobile md:px-md max-w-container-max mx-auto">
+    <!-- Left: Back -->
+    <div class="flex items-center min-w-[48px]">
+      <button class="flex items-center justify-center hover:opacity-70 transition-opacity" id="back-arrow">
+        <span class="material-symbols-outlined" style="color: #555555;">arrow_back</span>
+      </button>
+    </div>
+    <!-- Center: Brand Logo -->
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-baseline gap-[4px] cursor-pointer select-none" data-ml-logo>
+      <span style="color: #95C11E; font-size: 18px; font-weight: 700; line-height: 1;">MeetLingo</span>
+      <span style="color: #A77F4E; font-size: 11px; font-weight: 400; line-height: 1;">by ZIMM</span>
+    </div>
+    <!-- Right: Timer pill (static) -->
+    <div class="flex items-center justify-end min-w-[48px]">
+      <div class="bg-[#EEEEEE] rounded-full px-3 py-1 flex items-center">
+        <span class="font-label-md text-[#555555]" style="font-size: 14px;">--:--</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="flex-grow flex flex-col items-center justify-center px-margin-mobile md:px-lg py-xl">
+  <div class="w-full max-w-md bg-white border border-surface-container-highest p-md md:p-lg rounded shadow-sm flex flex-col items-center text-center">
+
+    <!-- Pulsing Icon -->
+    <div class="mb-md relative flex items-center justify-center">
+      <div class="absolute w-20 h-20 rounded-full bg-[#95C11E] pulse-ring"></div>
+      <div class="w-16 h-16 rounded-full bg-[#95C11E] flex items-center justify-center z-10">
+        <span class="material-symbols-outlined text-white text-[32px]" style="font-variation-settings:'FILL' 1;">hourglass_top</span>
+      </div>
+    </div>
+
+    <!-- Heading -->
+    <h1 class="font-headline-md text-headline-md text-on-background mb-base" id="waiting-heading">Waiting for host to start</h1>
+
+    <!-- Animated dots -->
+    <div class="flex gap-1 mb-md mt-1">
+      <span class="dot w-2 h-2 rounded-full bg-[#95C11E] inline-block"></span>
+      <span class="dot w-2 h-2 rounded-full bg-[#95C11E] inline-block"></span>
+      <span class="dot w-2 h-2 rounded-full bg-[#95C11E] inline-block"></span>
+    </div>
+
+    <!-- Subtext -->
+    <p class="font-body-md text-body-md text-on-surface-variant mb-lg max-w-xs" id="waiting-sub">
+      The meeting will begin automatically once the host starts.
+    </p>
+
+    <!-- Cancel button -->
+    <button id="cancel-btn" class="text-secondary font-label-md text-label-md underline hover:opacity-80 transition-opacity">
+      Go back
+    </button>
+  </div>
+</main>
+
+<!-- Decorative grid background -->
+<div class="fixed inset-0 -z-10 pointer-events-none opacity-[0.03]">
+  <svg height="100%" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern height="40" id="grid" patternunits="userSpaceOnUse" width="40">
+        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" stroke-width="1"></path>
+      </pattern>
+    </defs>
+    <rect fill="url(#grid)" height="100%" width="100%"></rect>
+  </svg>
+</div>
+
+<script src="/js/ui-lang.js"></script>
+<script>
+  // ── Translations for this page ───────────────────────────────
+  var WAIT_T = {
+    English:    { h: 'Waiting for host to start',            s: 'The meeting will begin automatically once the host starts.',   cancel: 'Go back' },
+    German:     { h: 'Warten auf den Host ...',              s: 'Die Sitzung startet automatisch, sobald der Host beginnt.',    cancel: 'Zurück' },
+    Spanish:    { h: 'Esperando al anfitrión ...',           s: 'La reunión comenzará automáticamente cuando el anfitrión inicie.', cancel: 'Volver' },
+    French:     { h: "En attente de l'hôte ...",             s: "La réunion démarrera automatiquement dès que l'hôte commencera.", cancel: 'Retour' },
+    Italian:    { h: "In attesa dell'host ...",              s: "La riunione inizierà automaticamente quando l'host avvia.",    cancel: 'Indietro' },
+    Japanese:   { h: 'ホストの開始を待っています ...',            s: 'ホストが開始するとミーティングが自動的に始まります。',                          cancel: '戻る' },
+    Portuguese: { h: 'Aguardando o anfitrião ...',           s: 'A reunião começará automaticamente quando o anfitrião iniciar.', cancel: 'Voltar' },
+    Turkish:    { h: 'Ana sunucu bekleniyor ...',            s: 'Toplantı, ana sunucu başlatınca otomatik olarak açılacak.',   cancel: 'Geri' },
+    Dutch:      { h: 'Wachten op de host ...',               s: 'De vergadering begint automatisch zodra de host start.',      cancel: 'Terug' },
+    Korean:     { h: '호스트를 기다리는 중 ...',                 s: '호스트가 시작하면 회의가 자동으로 시작됩니다.',                            cancel: '돌아가기' },
+    Chinese:    { h: '等待主持人开始 ...',                      s: '主持人开始后，会议将自动启动。',                                          cancel: '返回' },
+    Arabic:     { h: 'في انتظار المضيف ...',                  s: 'ستبدأ الاجتماع تلقائيًا عند بدء المضيف.',                     cancel: 'رجوع' },
+    Russian:    { h: 'Ожидание организатора ...',            s: 'Встреча начнётся автоматически, как только организатор запустит её.', cancel: 'Назад' },
+    Polish:     { h: 'Oczekiwanie na hosta ...',             s: 'Spotkanie rozpocznie się automatycznie, gdy host je uruchomi.', cancel: 'Wróć' },
+    Swedish:    { h: 'Väntar på värden ...',                 s: 'Mötet startar automatiskt när värden börjar.',                 cancel: 'Tillbaka' },
+    Hindi:      { h: 'होस्ट का इंतजार ...',                   s: 'होस्ट के शुरू होते ही मीटिंग अपने आप शुरू हो जाएगी।',         cancel: 'वापस जाएं' },
+    Greek:      { h: 'Αναμονή για τον οικοδεσπότη ...',     s: 'Η σύσκεψη θα ξεκινήσει αυτόματα μόλις ξεκινήσει ο οικοδεσπότης.', cancel: 'Πίσω' },
+    Ukrainian:  { h: 'Очікування організатора ...',          s: 'Зустріч розпочнеться автоматично, як тільки організатор запустить її.', cancel: 'Назад' },
+  };
+
+  // Apply translations
+  var lang = localStorage.getItem('meetlingo_lang') || 'English';
+  var t = WAIT_T[lang] || WAIT_T['English'];
+  document.getElementById('waiting-heading').textContent = t.h;
+  document.getElementById('waiting-sub').textContent     = t.s;
+  document.getElementById('cancel-btn').textContent      = t.cancel;
+
+  // Wire logo → index.html
+  mlWireLogoToHome();
+
+  // Back arrow → preferences.html
+  document.getElementById('back-arrow').addEventListener('click', function() {
+    window.mlLeaveOk = true;
+    window.location.href = 'preferences.html';
+  });
+
+  // Cancel button → preferences.html
+  document.getElementById('cancel-btn').addEventListener('click', function() {
+    window.mlLeaveOk = true;
+    window.location.href = 'preferences.html';
+  });
+
+  // ── Poll server for meeting status every 1.5 seconds ──────────
+  var pollInterval = setInterval(async function() {
+    try {
+      var res  = await fetch('/api/meeting-status');
+      var data = await res.json();
+      if (data.active) {
+        clearInterval(pollInterval);
+        window.mlLeaveOk = true;
+        window.location.href = 'meeting.html';
+      }
+    } catch(e) {
+      // Fallback: localStorage if server unreachable
+      if (localStorage.getItem('meetlingo_meeting_active') === 'true') {
+        clearInterval(pollInterval);
+        window.mlLeaveOk = true;
+        window.location.href = 'meeting.html';
+      }
+    }
+  }, 1500);
+
+  // Suppress accidental refresh
+  mlWireBeforeUnload();
+</script>
+</body></html>

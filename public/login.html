@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MeetLingo - Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#7b582a",
+                        "on-tertiary-fixed": "#1b1c1c",
+                        "on-tertiary-container": "#fefcfc",
+                        "on-primary": "#ffffff",
+                        "outline": "#817569",
+                        "inverse-primary": "#a8d635",
+                        "primary-fixed-dim": "#a8d635",
+                        "primary": "#4b6400",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#795629",
+                        "on-background": "#1a1c1c",
+                        "outline-variant": "#d3c4b6",
+                        "tertiary-container": "#757474",
+                        "surface-variant": "#e2e2e2",
+                        "on-surface-variant": "#4f453a",
+                        "surface-container-low": "#f4f3f3",
+                        "surface-tint": "#4d6700",
+                        "on-primary-fixed": "#151f00",
+                        "surface-dim": "#dadada",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2f3131",
+                        "tertiary": "#5c5c5c",
+                        "surface-container": "#eeeeee",
+                        "on-tertiary-fixed-variant": "#464747",
+                        "background": "#f9f9f9",
+                        "inverse-on-surface": "#f1f1f1",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#e8e8e8",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#fbffe6",
+                        "secondary-fixed": "#ffddb8",
+                        "on-secondary-fixed-variant": "#604015",
+                        "surface": "#f9f9f9",
+                        "error": "#ba1a1a",
+                        "secondary-container": "#ffcf97",
+                        "tertiary-fixed-dim": "#c8c6c6",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-surface": "#1a1c1c",
+                        "on-secondary-fixed": "#2a1700",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed": "#e4e2e2",
+                        "primary-container": "#5f7f00",
+                        "surface-bright": "#f9f9f9",
+                        "on-primary-fixed-variant": "#394d00",
+                        "primary-fixed": "#c4f351",
+                        "secondary-fixed-dim": "#edbe88"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "lg": "48px",
+                        "xs": "4px",
+                        "margin-mobile": "16px",
+                        "sm": "12px",
+                        "base": "8px",
+                        "md": "24px",
+                        "xl": "80px",
+                        "container-max": "1200px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Source Sans 3"],
+                        "headline-lg-mobile": ["Source Sans 3"],
+                        "caption": ["Source Sans 3"],
+                        "headline-lg": ["Source Sans 3"],
+                        "headline-md": ["Source Sans 3"],
+                        "body-lg": ["Source Sans 3"],
+                        "body-md": ["Source Sans 3"],
+                        "label-md": ["Source Sans 3"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                        "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Source Sans 3', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="w-full h-[56px] sticky top-0 bg-white border-b border-[#EEEEEE] flex justify-between items-center px-4 z-50">
+<div class="flex-1 flex items-center">
+<span class="material-symbols-outlined text-[#555555] cursor-pointer" id="back-arrow">arrow_back</span>
+</div>
+<div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-baseline gap-1 cursor-pointer select-none" data-ml-logo>
+<span class="font-bold text-[18px] text-[#95C11E] leading-none">MeetLingo</span>
+<span class="text-[11px] text-[#A77F4E] leading-none">by ZIMM</span>
+</div>
+<div class="flex-1 flex justify-end">
+<div class="bg-[#EEEEEE] px-3 py-1 rounded-full">
+<span class="text-[14px] font-medium text-[#555555]">--:--</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex items-center justify-center px-margin-mobile md:px-0 py-xl">
+<div class="max-w-[440px] w-full bg-surface-container-lowest border border-surface-container p-lg md:p-xl rounded-xl flex flex-col items-center text-center">
+<!-- Branding Icon -->
+<div class="mb-md">
+<div class="w-16 h-16 rounded-full border-2 border-[#95C11E] flex items-center justify-center bg-white">
+<span class="material-symbols-outlined text-[#95C11E] !text-[32px]">mail</span>
+</div>
+</div>
+<!-- Header Section -->
+<div class="space-y-base mb-lg">
+<h1 class="font-headline-lg text-headline-lg text-on-background" id="ml-login-heading">Enter your email</h1>
+<p class="font-body-md text-body-md text-tertiary" id="ml-login-sub">We'll send you a 6-digit code</p>
+</div>
+<!-- Input Section -->
+<form class="w-full space-y-md" id="login-form">
+<div class="relative w-full">
+<input class="w-full px-md py-4 bg-white border-2 border-surface-container rounded-xl text-on-surface focus:border-primary focus:ring-0 transition-all font-body-md placeholder:text-outline-variant" placeholder="name@example.com" type="email" id="ml-email-input"/>
+</div>
+<button class="w-full bg-[#95C11E] text-white py-4 px-md rounded-xl font-label-md text-label-md uppercase tracking-widest flex items-center justify-center gap-base hover:opacity-90 active:scale-[0.98] transition-all" type="submit" id="ml-login-btn">SEND CODE <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</form>
+<!-- Footer Helper Text -->
+<div class="mt-md">
+<p class="font-caption text-caption text-tertiary" id="ml-login-helper">Check your inbox after tapping</p>
+</div>
+</div>
+</main>
+<script src="/js/ui-lang.js"></script>
+<script>
+    // Back arrow → index.html
+    document.getElementById('back-arrow').addEventListener('click', () => {
+        window.mlLeaveOk = true;
+        window.location.href = 'index.html';
+    });
+    // Send Code button → verify.html (Email in localStorage speichern)
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const emailInput = document.querySelector('input[type="email"]');
+        if (emailInput && emailInput.value.trim()) {
+            localStorage.setItem('meetlingo_email', emailInput.value.trim());
+        }
+        window.mlLeaveOk = true;
+        window.location.href = 'verify.html';
+    });
+    // Logo → home, beforeunload, translations
+    mlWireLogoToHome();
+    mlWireBeforeUnload();
+    mlApply('login');
+</script>
+
+<!-- Visual Accent Element (Decorative) -->
+<div class="fixed bottom-0 left-0 w-full h-1 bg-[#95C11E] opacity-20"></div>
+</body></html>

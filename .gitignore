@@ -1,0 +1,4 @@
+.env
+node_modules/
+.DS_Store
+stitch_meetlingo_mobile_translation_app/

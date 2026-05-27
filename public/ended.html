@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Meeting Ended - MeetLingo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-container": "#fefcfc",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#4f453a",
+                    "surface-variant": "#e2e2e2",
+                    "primary-fixed": "#c4f351",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed-variant": "#604015",
+                    "outline-variant": "#d3c4b6",
+                    "on-secondary-container": "#795629",
+                    "primary": "#4b6400",
+                    "on-tertiary-fixed": "#1b1c1c",
+                    "inverse-surface": "#2f3131",
+                    "secondary-container": "#ffcf97",
+                    "surface-container": "#eeeeee",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#5c5c5c",
+                    "surface-dim": "#dadada",
+                    "on-tertiary-fixed-variant": "#464747",
+                    "on-primary-fixed-variant": "#394d00",
+                    "on-primary-container": "#fbffe6",
+                    "secondary": "#7b582a",
+                    "secondary-fixed-dim": "#edbe88",
+                    "tertiary-container": "#757474",
+                    "surface-container-highest": "#e2e2e2",
+                    "on-secondary-fixed": "#2a1700",
+                    "on-primary-fixed": "#151f00",
+                    "surface-tint": "#4d6700",
+                    "tertiary-fixed": "#e4e2e2",
+                    "primary-fixed-dim": "#a8d635",
+                    "secondary-fixed": "#ffddb8",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#a8d635",
+                    "on-tertiary": "#ffffff",
+                    "on-surface": "#1a1c1c",
+                    "primary-container": "#5f7f00",
+                    "outline": "#817569",
+                    "error-container": "#ffdad6",
+                    "inverse-on-surface": "#f1f1f1",
+                    "tertiary-fixed-dim": "#c8c6c6",
+                    "surface-container-high": "#e8e8e8",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-low": "#f4f3f3",
+                    "on-background": "#1a1c1c",
+                    "surface-bright": "#f9f9f9",
+                    "on-error": "#ffffff",
+                    "surface": "#f9f9f9",
+                    "background": "#f9f9f9"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "lg": "48px",
+                    "gutter": "24px",
+                    "xs": "4px",
+                    "base": "8px",
+                    "xl": "80px",
+                    "md": "24px",
+                    "margin-mobile": "16px",
+                    "sm": "12px",
+                    "container-max": "1200px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Source Sans 3"],
+                    "caption": ["Source Sans 3"],
+                    "headline-xl": ["Source Sans 3"],
+                    "body-md": ["Source Sans 3"],
+                    "headline-md": ["Source Sans 3"],
+                    "headline-lg": ["Source Sans 3"],
+                    "label-md": ["Source Sans 3"],
+                    "body-lg": ["Source Sans 3"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .star-fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+            font-family: 'Source Sans 3', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<!-- TopAppBar Section -->
+<nav class="w-full sticky top-0 flex justify-between items-center px-4 h-[56px] bg-white border-b border-[#EEEEEE] z-50">
+<div class="flex items-center">
+<button class="p-1 text-[#555555] flex items-center justify-center" id="back-arrow">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+</div>
+<div class="flex items-center gap-[4px] absolute left-1/2 -translate-x-1/2 cursor-pointer select-none" data-ml-logo>
+<span class="font-bold text-[18px] whitespace-nowrap" style="color: #95C11E;">MeetLingo</span>
+<span class="text-[11px] font-normal whitespace-nowrap" style="color: #A77F4E;">by ZIMM</span>
+</div>
+<div class="bg-[#EEEEEE] text-[#555555] px-3 py-1 rounded-full text-[14px] font-medium" id="ended-timer">
+    24:59
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col items-center justify-center px-margin-mobile md:px-gutter max-w-container-max mx-auto w-full py-xl">
+<!-- Success Visual Anchor -->
+<div class="mb-lg flex flex-col items-center text-center">
+<div class="w-32 h-32 md:w-40 md:h-40 rounded-full flex items-center justify-center mb-md shadow-lg" style="background-color: #95C11E; width: 100px; height: 100px; border-radius: 9999px;">
+<span class="material-symbols-outlined text-white !text-[64px] md:!text-[80px]">check</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg mb-xs text-on-surface" id="ml-ended-heading">Meeting ended — Thank you!</h2>
+<p class="text-on-surface-variant font-body-lg text-body-lg opacity-80" id="meeting-summary-line">--</p>
+</div>
+<!-- Feedback & Settings Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter w-full max-w-4xl">
+<!-- Rate Card -->
+<div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-md flex flex-col items-center justify-center text-center transition-all hover:border-primary">
+<h3 class="font-label-md text-label-md tracking-widest text-on-surface-variant mb-base uppercase" id="ml-ended-rate">RATE YOUR EXPERIENCE</h3>
+<div class="flex gap-xs text-primary" id="star-container">
+<span class="material-symbols-outlined !text-[40px] cursor-pointer hover:scale-110 transition-transform star-btn" data-star="1">star</span>
+<span class="material-symbols-outlined !text-[40px] cursor-pointer hover:scale-110 transition-transform star-btn" data-star="2">star</span>
+<span class="material-symbols-outlined !text-[40px] cursor-pointer hover:scale-110 transition-transform star-btn" data-star="3">star</span>
+<span class="material-symbols-outlined !text-[40px] cursor-pointer hover:scale-110 transition-transform star-btn" data-star="4">star</span>
+<span class="material-symbols-outlined !text-[40px] cursor-pointer hover:scale-110 transition-transform star-btn" data-star="5">star</span>
+</div>
+<p class="mt-2 text-center" style="color: #555555; font-size: 13px;" id="ml-ended-tap">Tap to rate</p>
+</div>
+<!-- Summary Toggle Card -->
+<div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-md flex items-center justify-between transition-all hover:border-primary">
+<div class="flex items-center gap-base">
+<div class="bg-surface-container rounded-lg p-sm">
+<span class="material-symbols-outlined" style="color: #95C11E;">mail</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface" id="ml-ended-email">Send me a meeting summary</p>
+<p class="font-caption text-caption text-on-surface-variant" id="ml-ended-email-sub">Includes AI transcript and action items</p>
+</div>
+</div>
+<!-- Toggle Switch -->
+<div class="relative inline-flex items-center cursor-pointer" id="summary-toggle">
+<div class="w-12 h-6 rounded-full transition-colors" id="toggle-track" style="background-color: #95C11E;"></div>
+<div class="absolute top-1 bg-white w-4 h-4 rounded-full transition-all" id="toggle-thumb" style="left: 28px;"></div>
+</div>
+</div>
+</div>
+<!-- Exit Action -->
+<div class="mt-xl w-full max-w-4xl px-gutter">
+<button class="w-full text-on-primary py-md rounded-xl font-headline-md text-headline-md hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-base" id="exit-btn" style="background-color: #95C11E; color: white; border-radius: 9999px;"><span id="ml-ended-exit">Exit Meeting</span><span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</main>
+<script>
+    // ── Navigation ───────────────────────────────
+    document.getElementById('back-arrow').addEventListener('click', function() {
+        window.location.href = 'index.html';
+    });
+    document.getElementById('exit-btn').addEventListener('click', function() {
+        window.location.href = 'confirmation.html';
+    });
+
+    // ── Meeting-Summary-Zeile dynamisch befüllen ──
+    (function() {
+        var startStr = localStorage.getItem('meetlingo_meeting_start');
+        var endStr   = localStorage.getItem('meetlingo_meeting_end') || String(Date.now());
+        var lang     = localStorage.getItem('meetlingo_lang') || 'Unknown';
+        var el       = document.getElementById('meeting-summary-line');
+        if (!el) return;
+        if (!startStr) { el.textContent = lang; return; }
+        var elapsed = Math.floor((parseInt(endStr) - parseInt(startStr)) / 1000);
+        if (elapsed < 0) elapsed = 0;
+        var minutes = Math.floor(elapsed / 60);
+        var seconds = elapsed % 60;
+        var durationText = minutes > 0
+            ? minutes + ' min ' + String(seconds).padStart(2,'0') + ' s'
+            : seconds + ' s';
+        el.textContent = durationText + ' · ' + lang;
+    })();
+
+    // ── Timer: zeige Meetingdauer ─────────────────
+    (function() {
+        var el = document.getElementById('ended-timer');
+        if (!el) return;
+        var startStr = localStorage.getItem('meetlingo_meeting_start');
+        var endStr   = localStorage.getItem('meetlingo_meeting_end') || String(Date.now());
+        if (!startStr) { el.textContent = '--:--'; return; }
+        var elapsed = Math.floor((parseInt(endStr) - parseInt(startStr)) / 1000);
+        if (elapsed < 0) elapsed = 0;
+        var m = Math.floor(elapsed / 60);
+        var s = elapsed % 60;
+        el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    })();
+
+    // ── BUG 5: Star rating ───────────────────────
+    var stars      = document.querySelectorAll('.star-btn');
+    var savedRating = parseInt(localStorage.getItem('meetlingo_rating') || '0');
+    function updateStars(rating) {
+        stars.forEach(function(star) {
+            var n = parseInt(star.dataset.star);
+            if (n <= rating) {
+                star.style.color = '#95C11E';
+                star.style.fontVariationSettings = "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24";
+            } else {
+                star.style.color = '';
+                star.style.fontVariationSettings = "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24";
+            }
+        });
+    }
+    updateStars(savedRating);
+    stars.forEach(function(star) {
+        star.addEventListener('click', function() {
+            var rating = parseInt(star.dataset.star);
+            localStorage.setItem('meetlingo_rating', rating.toString());
+            updateStars(rating);
+        });
+    });
+
+    // ── Translations + Logo ───────────────────────
+    // (loaded after DOM is ready, script is at bottom)
+
+    // ── BUG 6: Email summary toggle ──────────────
+    var summaryToggle = document.getElementById('summary-toggle');
+    var toggleTrack   = document.getElementById('toggle-track');
+    var toggleThumb   = document.getElementById('toggle-thumb');
+    var summaryOn     = localStorage.getItem('meetlingo_summary') !== 'false';
+    function updateToggle() {
+        if (summaryOn) {
+            toggleTrack.style.backgroundColor = '#95C11E';
+            toggleThumb.style.left = '28px';
+        } else {
+            toggleTrack.style.backgroundColor = '#CCCCCC';
+            toggleThumb.style.left = '4px';
+        }
+    }
+    updateToggle();
+    summaryToggle.addEventListener('click', function() {
+        summaryOn = !summaryOn;
+        localStorage.setItem('meetlingo_summary', summaryOn.toString());
+        updateToggle();
+    });
+</script>
+<script src="/js/ui-lang.js"></script>
+<script>
+    mlWireLogoToHome();
+    mlApply('ended');
+</script>
+</body></html>
