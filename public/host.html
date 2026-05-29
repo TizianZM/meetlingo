@@ -501,6 +501,12 @@
 
         function doSave() {
             localStorage.setItem('meetlingo_agenda', input.value);
+            // Also save to server so listeners on other devices can fetch it
+            fetch('/api/agenda', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ agenda: input.value })
+            }).catch(function(e) { console.warn('[Agenda] Save to server failed:', e); });
             savedLabel.style.opacity = '1';
             setTimeout(function() { savedLabel.style.opacity = '0'; }, 1500);
         }

@@ -26,6 +26,7 @@ let meetingActive = false;
 let meetingStartTime = null;      // set when host presses START — used for cross-device timer sync
 let recentTexts = new Map();      // text → timestamp — dedup within 30s
 let recentContext = [];           // rolling last 3 transcriptions for GPT context
+let meetingAgenda = '';           // set by host via /api/agenda
 
 const SESSION_TIMEOUT = 60000; // ms — 60s buffer for Safari timer throttling
 
@@ -50,7 +51,18 @@ app.post('/api/reset-session', express.json(), (req, res) => {
   meetingStartTime = null;
   recentTexts = new Map();
   recentContext = [];
+  meetingAgenda = '';
   res.json({ success: true });
+});
+
+// Agenda: host saves, listeners fetch
+app.post('/api/agenda', express.json(), (req, res) => {
+  meetingAgenda = req.body.agenda || '';
+  res.json({ success: true });
+});
+
+app.get('/api/agenda', (req, res) => {
+  res.json({ agenda: meetingAgenda });
 });
 
 // Host starts meeting

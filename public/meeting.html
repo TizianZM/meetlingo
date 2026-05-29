@@ -397,15 +397,21 @@
         }
     }
 
-    // ── Load agenda ───────────────────────────────
+    // ── Load agenda from server (works cross-device) ──
     (function() {
-        var agenda = localStorage.getItem('meetlingo_agenda');
-        var el     = document.getElementById('agenda-display');
+        var el = document.getElementById('agenda-display');
         if (!el) return;
-        if (agenda && agenda.trim()) {
-            // Show original immediately; applyUILanguage() will translate it
-            displayAgendaText(agenda);
-        }
+        fetch('/api/agenda')
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.agenda && d.agenda.trim()) {
+                    displayAgendaText(d.agenda);
+                    // Trigger translation if language is not English
+                    var lang = localStorage.getItem('meetlingo_lang') || 'English';
+                    if (lang !== 'English') translateAgenda(lang);
+                }
+            })
+            .catch(function(e) { console.warn('[Agenda] Load failed:', e); });
     })();
 
     // ── Agenda Toggle ─────────────────────────────
