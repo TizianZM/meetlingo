@@ -374,8 +374,11 @@
         }).join('');
     }
 
+    var serverAgendaText = ''; // agenda text fetched from server (works cross-device)
+
     async function translateAgenda(lang) {
-        var original = localStorage.getItem('meetlingo_agenda');
+        // Use server-fetched text first, fall back to localStorage (host device only)
+        var original = serverAgendaText || localStorage.getItem('meetlingo_agenda');
         if (!original || !original.trim()) return;
         // English (or no lang) → show as-is
         if (!lang || lang === 'English') { displayAgendaText(original); return; }
@@ -405,10 +408,9 @@
             .then(function(r) { return r.json(); })
             .then(function(d) {
                 if (d.agenda && d.agenda.trim()) {
-                    displayAgendaText(d.agenda);
-                    // Trigger translation if language is not English
+                    serverAgendaText = d.agenda; // store for translateAgenda
                     var lang = localStorage.getItem('meetlingo_lang') || 'English';
-                    if (lang !== 'English') translateAgenda(lang);
+                    translateAgenda(lang); // handles both English (no-op) and other langs
                 }
             })
             .catch(function(e) { console.warn('[Agenda] Load failed:', e); });

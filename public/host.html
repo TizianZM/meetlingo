@@ -184,6 +184,15 @@
       <div id="active-mute-label" style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Live</div>
     </div>
   </div>
+  <!-- QR Code compact — for latecomers -->
+  <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;width:100%;display:flex;align-items:center;gap:16px;">
+    <div id="qr-container-active" style="width:80px;height:80px;flex-shrink:0;"></div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">Join Link</div>
+      <p id="qr-url-active" style="font-size:11px;color:#4b6400;font-weight:600;margin:0 0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Source Sans 3',sans-serif;"></p>
+      <button id="qr-copy-btn-active" style="background:#95C11E;color:white;border:none;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Source Sans 3',sans-serif;">Copy</button>
+    </div>
+  </div>
   <div style="background:#fff;border:1px solid #eee;border-radius:12px;width:100%;overflow:hidden;">
     <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fafafa;border-bottom:1px solid #f0f0f0;">
       <span class="material-symbols-outlined" style="color:#95C11E;font-size:18px;">transcribe</span>
@@ -521,25 +530,34 @@
 <script>
   (function() {
     var meetingUrl = window.location.origin;
-    var container  = document.getElementById('qr-container');
-    var urlLabel   = document.getElementById('qr-url');
-    var localHint  = document.getElementById('qr-local-hint');
-
-    // Show warning if running locally
     var isLocal = meetingUrl.includes('localhost') || meetingUrl.includes('127.0.0.1');
-    if (isLocal && localHint) localHint.style.display = 'block';
 
+    // Setup view QR
+    var container = document.getElementById('qr-container');
+    var urlLabel  = document.getElementById('qr-url');
+    var localHint = document.getElementById('qr-local-hint');
+    if (isLocal && localHint) localHint.style.display = 'block';
     if (container && typeof QRCode !== 'undefined') {
-      new QRCode(container, {
-        text:         meetingUrl,
-        width:        160,
-        height:       160,
-        colorDark:    '#1A1A1A',
-        colorLight:   '#FFFFFF',
-        correctLevel: QRCode.CorrectLevel.M
-      });
+      new QRCode(container, { text: meetingUrl, width: 160, height: 160, colorDark: '#1A1A1A', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.M });
     }
     if (urlLabel) urlLabel.textContent = meetingUrl;
+
+    // Active view QR (compact)
+    var containerActive = document.getElementById('qr-container-active');
+    var urlLabelActive  = document.getElementById('qr-url-active');
+    var copyBtnActive   = document.getElementById('qr-copy-btn-active');
+    if (containerActive && typeof QRCode !== 'undefined') {
+      new QRCode(containerActive, { text: meetingUrl, width: 80, height: 80, colorDark: '#1A1A1A', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.M });
+    }
+    if (urlLabelActive) urlLabelActive.textContent = meetingUrl;
+    if (copyBtnActive) {
+      copyBtnActive.addEventListener('click', function() {
+        navigator.clipboard.writeText(meetingUrl).then(function() {
+          copyBtnActive.textContent = '✓';
+          setTimeout(function() { copyBtnActive.textContent = 'Copy'; }, 1500);
+        });
+      });
+    }
   })();
 </script>
 
