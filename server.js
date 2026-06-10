@@ -127,9 +127,17 @@ app.get('/api/listener-poll', (req, res) => {
 
 // ── Host translation pipeline ─────────────────────────
 // Audio → Whisper (transcribe once) → GPT-4o-mini × active langs (parallel, no TTS)
+const LANG_TO_ISO = {
+  'English': 'en', 'German': 'de', 'Spanish': 'es', 'French': 'fr',
+  'Italian': 'it', 'Japanese': 'ja', 'Portuguese': 'pt', 'Turkish': 'tr',
+  'Dutch': 'nl', 'Korean': 'ko', 'Chinese': 'zh', 'Arabic': 'ar',
+  'Russian': 'ru', 'Polish': 'pl', 'Swedish': 'sv', 'Hindi': 'hi',
+  'Greek': 'el', 'Ukrainian': 'uk',
+};
+
 app.post('/api/host-translate', express.json(), async (req, res) => {
   const { audio, hostLang } = req.body;
-  const whisperLang = hostLang || 'de'; // default German
+  const whisperLang = LANG_TO_ISO[hostLang] || hostLang || 'de'; // convert "English" → "en"
   try {
     const audioBuffer = Buffer.from(audio, 'base64');
     const { Readable } = require('stream');
