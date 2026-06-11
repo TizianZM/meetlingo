@@ -11,11 +11,26 @@ app.use(express.json({ limit: '10mb' })); // base64 WAV audio can be several MB 
 
 // ── OpenAI ───────────────────────────────────────────
 const { OpenAI } = require('openai');
-// Lazy init — avoids crash on startup if env var loads after module init
 function getOpenAI() {
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new Error('OPENAI_API_KEY environment variable is not set');
   return new OpenAI({ apiKey: key });
+}
+
+// ── Resend (email) ────────────────────────────────────
+const { Resend } = require('resend');
+function getResend() {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) throw new Error('RESEND_API_KEY environment variable is not set');
+  return new Resend(key);
+}
+
+// ── Verification codes ────────────────────────────────
+// email → { code, expires }  (10-minute TTL, cleaned on use)
+const pendingCodes = new Map();
+
+function generateCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
 }
 
 // ── In-memory session state ───────────────────────────
@@ -39,6 +54,59 @@ function getActiveLangs() {
   });
   return [...langs];
 }
+
+// ── Email verification ────────────────────────────────
+
+app.post('/api/send-code', express.json(), async (req, res) => {
+  const { email } = req.body;
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.json({ success: false, error: 'Invalid email address' });
+  }
+  const code = generateCode();
+  pendingCodes.set(email.toLowerCase(), { code, expires: Date.now() + 10 * 60 * 1000 });
+
+  try {
+    await getResend().emails.send({
+      from: 'MeetLingo <onboarding@resend.dev>',
+      to: email,
+      subject: `Your MeetLingo code: ${code}`,
+      html: `
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f9f9f9;">
+          <div style="text-align:center;margin-bottom:28px;">
+            <span style="font-size:24px;font-weight:700;color:#95C11E;">MeetLingo</span>
+            <span style="font-size:13px;color:#A77F4E;margin-left:4px;">by ZIMM</span>
+          </div>
+          <div style="background:#fff;border-radius:16px;padding:32px 24px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+            <p style="font-size:16px;color:#444;margin:0 0 24px;">Your verification code is:</p>
+            <div style="font-size:48px;font-weight:700;letter-spacing:12px;color:#1a1c1c;margin-bottom:24px;">${code}</div>
+            <p style="font-size:13px;color:#999;margin:0;">Valid for 10 minutes. Do not share this code.</p>
+          </div>
+          <p style="text-align:center;font-size:12px;color:#bbb;margin-top:24px;">MeetLingo &mdash; Real-time meeting translation</p>
+        </div>
+      `,
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[Email] Send failed:', err.message);
+    res.json({ success: false, error: 'Failed to send email' });
+  }
+});
+
+app.post('/api/verify-code', express.json(), (req, res) => {
+  const { email, code } = req.body;
+  const key = (email || '').toLowerCase();
+  const entry = pendingCodes.get(key);
+  if (!entry) return res.json({ success: false, error: 'No code sent to this email' });
+  if (Date.now() > entry.expires) {
+    pendingCodes.delete(key);
+    return res.json({ success: false, error: 'Code expired — request a new one' });
+  }
+  if (entry.code !== String(code).trim()) {
+    return res.json({ success: false, error: 'Incorrect code' });
+  }
+  pendingCodes.delete(key);
+  res.json({ success: true });
+});
 
 // ── Session management ────────────────────────────────
 

@@ -153,27 +153,54 @@
 <!-- Footer Helper Text -->
 <div class="mt-md">
 <p class="font-caption text-caption text-tertiary" id="ml-login-helper">Check your inbox after tapping</p>
+<p id="ml-login-error" style="display:none;color:#c0392b;font-size:13px;font-weight:600;margin-top:8px;"></p>
 </div>
 </div>
 </main>
 <script src="/js/ui-lang.js"></script>
 <script>
-    // Back arrow → index.html
     document.getElementById('back-arrow').addEventListener('click', () => {
         window.mlLeaveOk = true;
         window.location.href = 'index.html';
     });
-    // Send Code button → verify.html (Email in localStorage speichern)
-    document.getElementById('login-form').addEventListener('submit', (e) => {
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const emailInput = document.querySelector('input[type="email"]');
-        if (emailInput && emailInput.value.trim()) {
-            localStorage.setItem('meetlingo_email', emailInput.value.trim());
+        const emailInput = document.getElementById('ml-email-input');
+        const btn        = document.getElementById('ml-login-btn');
+        const errEl      = document.getElementById('ml-login-error');
+        const email      = emailInput.value.trim();
+        if (!email) return;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span style="opacity:.7">Sending…</span>';
+        errEl.style.display = 'none';
+
+        try {
+            const res  = await fetch('/api/send-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            if (data.success) {
+                localStorage.setItem('meetlingo_email', email);
+                window.mlLeaveOk = true;
+                window.location.href = 'verify.html';
+            } else {
+                errEl.textContent = data.error || 'Could not send code. Please try again.';
+                errEl.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = 'SEND CODE <span class="material-symbols-outlined text-[20px]">arrow_forward</span>';
+            }
+        } catch {
+            errEl.textContent = 'Network error — please try again.';
+            errEl.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = 'SEND CODE <span class="material-symbols-outlined text-[20px]">arrow_forward</span>';
         }
-        window.mlLeaveOk = true;
-        window.location.href = 'verify.html';
     });
-    // Logo → home, beforeunload, translations
+
     mlWireLogoToHome();
     mlWireBeforeUnload();
     mlApply('login');
