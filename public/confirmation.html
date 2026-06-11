@@ -1,208 +1,174 @@
 <!DOCTYPE html>
-
 <html class="light" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>MeetLingo - Confirmation</title>
+<title>MeetLingo - Meeting Summary</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "outline-variant": "#d3c4b6",
-                        "on-tertiary-container": "#fefcfc",
-                        "on-tertiary": "#ffffff",
-                        "secondary-container": "#ffcf97",
-                        "on-primary-container": "#fbffe6",
-                        "on-secondary-fixed": "#2a1700",
-                        "surface-dim": "#dadada",
-                        "surface-container-highest": "#e2e2e2",
-                        "on-primary": "#ffffff",
-                        "surface-container-high": "#e8e8e8",
-                        "inverse-primary": "#a8d635",
-                        "surface-container": "#eeeeee",
-                        "error": "#ba1a1a",
-                        "tertiary-fixed": "#e4e2e2",
-                        "on-primary-fixed-variant": "#394d00",
-                        "on-error": "#ffffff",
-                        "surface-container-low": "#f4f3f3",
-                        "inverse-on-surface": "#f1f1f1",
-                        "surface-container-lowest": "#ffffff",
-                        "error-container": "#ffdad6",
-                        "primary-fixed-dim": "#a8d635",
-                        "on-tertiary-fixed-variant": "#464747",
-                        "primary-container": "#5f7f00",
-                        "surface-variant": "#e2e2e2",
-                        "on-surface-variant": "#4f453a",
-                        "surface-bright": "#f9f9f9",
-                        "on-background": "#1a1c1c",
-                        "on-tertiary-fixed": "#1b1c1c",
-                        "secondary-fixed-dim": "#edbe88",
-                        "surface-tint": "#4d6700",
-                        "inverse-surface": "#2f3131",
-                        "tertiary-fixed-dim": "#c8c6c6",
-                        "primary": "#4b6400",
-                        "on-secondary-fixed-variant": "#604015",
-                        "primary-fixed": "#c4f351",
-                        "background": "#f9f9f9",
-                        "on-surface": "#1a1c1c",
-                        "on-secondary-container": "#795629",
-                        "on-primary-fixed": "#151f00",
-                        "tertiary-container": "#757474",
-                        "secondary-fixed": "#ffddb8",
-                        "on-secondary": "#ffffff",
-                        "tertiary": "#5c5c5c",
-                        "secondary": "#7b582a",
-                        "on-error-container": "#93000a",
-                        "outline": "#817569",
-                        "surface": "#f9f9f9",
-                        "brand-green": "#95C11E",
-                        "brand-accent": "#A77F4E"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.125rem",
-                        "lg": "0.25rem",
-                        "xl": "0.5rem",
-                        "full": "0.75rem",
-                        "card": "16px"
-                    },
-                    "spacing": {
-                        "lg": "48px",
-                        "xl": "80px",
-                        "gutter": "24px",
-                        "xs": "4px",
-                        "container-max": "1200px",
-                        "sm": "12px",
-                        "base": "8px",
-                        "margin-mobile": "16px",
-                        "md": "24px"
-                    },
-                    "fontFamily": {
-                        "headline-lg": ["Source Sans 3"],
-                        "headline-md": ["Source Sans 3"],
-                        "caption": ["Source Sans 3"],
-                        "label-md": ["Source Sans 3"],
-                        "body-md": ["Source Sans 3"],
-                        "body-lg": ["Source Sans 3"]
-                    },
-                    "fontSize": {
-                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
-                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
-                        "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
-                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
-                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
-                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
-                    }
-                },
-            },
-        }
-    </script>
 <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .bg-glow {
-            background: radial-gradient(circle at center, rgba(149, 193, 30, 0.15) 0%, transparent 70%);
-        }
-        .shadow-soft {
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        }
-        body {
-            min-height: max(884px, 100dvh);
-            font-family: 'Source Sans 3', sans-serif;
-        }
-    </style>
+  *, *::before, *::after { box-sizing: border-box; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  body { font-family: 'Source Sans 3', sans-serif; min-height: 100vh; min-height: 100dvh; background: #f9f9f9; }
+  .section-label { font-size: 11px; font-weight: 700; color: #95C11E; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+  .card { background: #fff; border: 1px solid #EEEEEE; border-radius: 14px; padding: 20px 22px; }
+</style>
 </head>
-<body class="bg-[#F5F5F5] font-body-md text-on-background min-h-screen flex flex-col">
+<body class="text-[#1a1c1c] flex flex-col">
+
 <!-- TopAppBar -->
-<header class="w-full top-0 sticky bg-white border-b border-[#EEEEEE] flex justify-center items-center z-50 h-[56px]">
-<div class="max-w-7xl w-full h-full px-4 grid grid-cols-3 items-center">
-<div class="flex justify-start"></div>
-<div class="flex justify-center items-center whitespace-nowrap gap-1">
-<span class="font-bold text-[18px] text-[#95C11E]">MeetLingo</span>
-<span class="text-[11px] text-[#A77F4E]">by ZIMM</span>
-</div>
-<div class="flex justify-end">
-<div class="bg-[#EEEEEE] text-[#555555] text-[12px] px-3 py-1 rounded-full font-medium">
-      --:--
-</div>
-</div>
-</div>
+<header style="position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid #EEEEEE;height:56px;display:flex;align-items:center;justify-content:center;">
+  <div style="display:flex;align-items:baseline;gap:4px;">
+    <span style="font-size:18px;font-weight:700;color:#95C11E;font-family:'Source Sans 3',sans-serif;">MeetLingo</span>
+    <span style="font-size:11px;color:#A77F4E;font-family:'Source Sans 3',sans-serif;">by ZIMM</span>
+  </div>
 </header>
-<!-- Main Content Canvas -->
-<main class="flex-grow flex flex-col items-center justify-center px-margin-mobile relative overflow-hidden">
-<!-- Glow Effect Behind Icon -->
-<div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-glow pointer-events-none"></div>
-<div class="w-full max-w-md flex flex-col items-center z-10">
-<!-- Success Icon -->
-<div class="w-[100px] h-[100px] bg-brand-green rounded-full flex items-center justify-center shadow-soft mb-lg">
-<span class="material-symbols-outlined text-white text-[48px]" style='font-variation-settings: "FILL" 1;'>done_all</span>
-</div>
-<!-- Titles -->
-<h2 class="text-[22px] font-bold text-[#1A1A1A] text-center mb-2 leading-tight">
-                Thank you for your feedback!
-            </h2>
-<p class="text-[15px] text-[#555555] text-center mb-base">
-                Your rating has been saved.
-            </p>
-<!-- Divider -->
-<div class="w-full h-[1px] bg-[#EEEEEE] my-md"></div>
-<!-- Email Confirmation Card -->
-<div class="w-full bg-white rounded-card shadow-soft border-l-[3px] border-brand-green p-md flex items-center mb-md transition-all hover:scale-[1.01]">
-<div class="w-10 h-10 bg-brand-green rounded-full flex items-center justify-center shrink-0 mr-4">
-<span class="material-symbols-outlined text-white text-[20px]" style='font-variation-settings: "FILL" 1;'>mail</span>
-</div>
-<div class="flex flex-col">
-<span class="text-[15px] font-bold text-[#1A1A1A]">Meeting summary sent!</span>
-<span class="text-[13px] text-[#555555]" id="conf-email">Check your inbox</span>
-</div>
-</div>
-<!-- Meeting Recap -->
-<p class="text-[13px] text-brand-accent italic text-center mb-xl" id="conf-recap">
-                &nbsp;
-            </p>
-<!-- Primary CTA -->
-<button class="w-full bg-brand-green hover:bg-[#86ae1b] active:scale-95 duration-150 rounded-full h-[56px] flex items-center justify-center gap-2 mb-md shadow-soft" id="home-btn">
-<span class="material-symbols-outlined text-white">home</span>
-<span class="text-white font-bold tracking-wide">Back to Startscreen</span>
-</button>
-</div>
+
+<main style="flex:1;max-width:600px;margin:0 auto;width:100%;padding:28px 16px 48px;">
+
+  <!-- ── LISTENER VIEW ── -->
+  <div id="listener-view" style="display:none;flex-direction:column;align-items:center;gap:20px;">
+    <div style="width:80px;height:80px;background:#95C11E;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:4px;">
+      <span class="material-symbols-outlined" style="color:#fff;font-size:40px;font-variation-settings:'FILL' 1;">done_all</span>
+    </div>
+    <div style="text-align:center;">
+      <h2 style="font-size:22px;font-weight:700;margin:0 0 6px;">Thank you!</h2>
+      <p style="font-size:15px;color:#666;margin:0;">Your rating has been saved.</p>
+    </div>
+    <!-- Email sent card -->
+    <div class="card" style="width:100%;display:flex;align-items:center;gap:14px;border-left:3px solid #95C11E;">
+      <div style="width:44px;height:44px;background:#95C11E;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span class="material-symbols-outlined" style="color:#fff;font-size:22px;font-variation-settings:'FILL' 1;">mail</span>
+      </div>
+      <div>
+        <p style="font-size:15px;font-weight:700;margin:0 0 2px;">Meeting summary sent!</p>
+        <p style="font-size:13px;color:#666;margin:0;" id="conf-email-line">Check your inbox</p>
+      </div>
+    </div>
+    <div class="card" style="width:100%;text-align:center;">
+      <p style="font-size:13px;color:#888;margin:0;" id="conf-recap-line">&nbsp;</p>
+    </div>
+    <button onclick="window.location.href='index.html'" style="width:100%;height:52px;background:#95C11E;color:#fff;border:none;border-radius:9999px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Source Sans 3',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <span class="material-symbols-outlined">home</span> Back to Start
+    </button>
+  </div>
+
+  <!-- ── HOST SUMMARY VIEW ── -->
+  <div id="host-view" style="display:none;flex-direction:column;gap:16px;">
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <span class="material-symbols-outlined" style="color:#95C11E;font-size:28px;font-variation-settings:'FILL' 1;">task_alt</span>
+      <div>
+        <h2 style="font-size:20px;font-weight:700;margin:0;">Meeting ended</h2>
+        <p style="font-size:13px;color:#888;margin:0;" id="host-recap-line">—</p>
+      </div>
+    </div>
+
+    <!-- Details card -->
+    <div class="card">
+      <div class="section-label">Meeting Details</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;">
+        <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.05em;">Date</div><div style="font-size:14px;font-weight:600;" id="h-date">—</div></div>
+        <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.05em;">Start</div><div style="font-size:14px;font-weight:600;" id="h-time">—</div></div>
+        <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.05em;">Duration</div><div style="font-size:14px;font-weight:600;" id="h-duration">—</div></div>
+        <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.05em;">Languages</div><div style="font-size:14px;font-weight:600;" id="h-langs">—</div></div>
+      </div>
+    </div>
+
+    <!-- Agenda card -->
+    <div class="card" id="h-agenda-card" style="display:none;">
+      <div class="section-label">Agenda</div>
+      <p style="font-size:14px;line-height:1.7;color:#333;margin:0;white-space:pre-line;" id="h-agenda">—</p>
+    </div>
+
+    <!-- Summary card -->
+    <div class="card">
+      <div class="section-label">Meeting Summary</div>
+      <p style="font-size:14px;line-height:1.7;color:#333;margin:0;" id="h-summary">
+        <span style="color:#aaa;font-style:italic;">Generating summary…</span>
+      </p>
+    </div>
+
+    <!-- Transcript count -->
+    <div class="card" style="display:flex;align-items:center;gap:12px;">
+      <span class="material-symbols-outlined" style="color:#95C11E;font-size:22px;">transcribe</span>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#333;" id="h-transcript-count">— segments transcribed</div>
+        <div style="font-size:12px;color:#888;">Full transcript included in summary PDF</div>
+      </div>
+    </div>
+
+    <button onclick="window.location.href='index.html'" style="width:100%;height:52px;background:#95C11E;color:#fff;border:none;border-radius:9999px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Source Sans 3',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;">
+      <span class="material-symbols-outlined">home</span> Back to Start
+    </button>
+  </div>
+
 </main>
 
 <script>
-    // Back to Startscreen → index.html
-    document.getElementById('home-btn').addEventListener('click', () => {
-        window.location.href = 'index.html';
+(function() {
+  var isHost = new URLSearchParams(window.location.search).get('host') === '1';
+
+  if (!isHost) {
+    // ── Listener view ──────────────────────────────────
+    document.getElementById('listener-view').style.display = 'flex';
+    var email    = localStorage.getItem('meetlingo_email');
+    var lang     = localStorage.getItem('meetlingo_lang') || 'Unknown';
+    var startStr = localStorage.getItem('meetlingo_meeting_start');
+    var endStr   = localStorage.getItem('meetlingo_meeting_end') || String(Date.now());
+
+    var emailLine = document.getElementById('conf-email-line');
+    if (emailLine && email) emailLine.textContent = 'Sent to ' + email;
+
+    var recapLine = document.getElementById('conf-recap-line');
+    if (recapLine && startStr) {
+      var elapsed = Math.max(0, Math.floor((parseInt(endStr) - parseInt(startStr)) / 1000));
+      var m = Math.floor(elapsed / 60), s = elapsed % 60;
+      recapLine.textContent = (m > 0 ? m + ' min ' + String(s).padStart(2,'0') + ' s' : s + ' s') + ' · ' + lang;
+    }
+    return;
+  }
+
+  // ── Host view ──────────────────────────────────────
+  document.getElementById('host-view').style.display = 'flex';
+
+  fetch('/api/meeting-summary')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var start    = new Date(d.startTime || Date.now());
+      var end      = new Date(d.endTime   || Date.now());
+      var durSec   = Math.max(0, Math.floor((end - start) / 1000));
+      var m        = Math.floor(durSec / 60), s = durSec % 60;
+      var durLabel = m > 0 ? m + ' min ' + String(s).padStart(2,'0') + ' s' : s + ' s';
+      var dateStr  = start.toLocaleDateString('de-AT', { day:'2-digit', month:'long', year:'numeric' });
+      var timeStr  = start.toLocaleTimeString('de-AT', { hour:'2-digit', minute:'2-digit' }) + ' Uhr';
+
+      document.getElementById('h-date').textContent     = dateStr;
+      document.getElementById('h-time').textContent     = timeStr;
+      document.getElementById('h-duration').textContent = durLabel;
+      document.getElementById('h-langs').textContent    = (d.languages || []).join(', ') || '—';
+      document.getElementById('host-recap-line').textContent = dateStr + ' · ' + durLabel;
+      document.getElementById('h-transcript-count').textContent =
+        (d.transcriptions ? d.transcriptions.length : 0) + ' segments transcribed';
+
+      if (d.agenda && d.agenda.trim()) {
+        document.getElementById('h-agenda').textContent = d.agenda.trim();
+        document.getElementById('h-agenda-card').style.display = 'block';
+      }
+    })
+    .catch(function() {});
+
+  // Poll for GPT summary (generated async server-side from transcript)
+  // We trigger it via the send-summary-email but for host we just show the raw transcript or
+  // generate a quick summary client-side by fetching
+  fetch('/api/generate-host-summary')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.summary) document.getElementById('h-summary').textContent = d.summary;
+    })
+    .catch(function() {
+      document.getElementById('h-summary').textContent = 'Summary not available. Transcript stored for email reports.';
     });
-
-    // Dynamische Inhalte aus localStorage
-    (function() {
-        var email   = localStorage.getItem('meetlingo_email') || null;
-        var lang    = localStorage.getItem('meetlingo_lang') || 'Unknown';
-        var startStr = localStorage.getItem('meetlingo_meeting_start');
-        var endStr   = localStorage.getItem('meetlingo_meeting_end') || String(Date.now());
-
-        var emailEl  = document.getElementById('conf-email');
-        var recapEl  = document.getElementById('conf-recap');
-
-        if (emailEl && email) {
-            emailEl.textContent = 'Check your inbox at ' + email;
-        }
-
-        if (recapEl && startStr) {
-            var elapsed = Math.floor((parseInt(endStr) - parseInt(startStr)) / 1000);
-            if (elapsed < 0) elapsed = 0;
-            var minutes = Math.floor(elapsed / 60);
-            var seconds = elapsed % 60;
-            var durationText = minutes > 0
-                ? minutes + ' min ' + String(seconds).padStart(2,'0') + ' s'
-                : seconds + ' s';
-            recapEl.textContent = durationText + ' · ' + lang;
-        }
-    })();
+})();
 </script>
 </body></html>

@@ -184,7 +184,23 @@
     document.getElementById('back-arrow').addEventListener('click', function() {
         window.location.href = 'index.html';
     });
-    document.getElementById('exit-btn').addEventListener('click', function() {
+    document.getElementById('exit-btn').addEventListener('click', async function() {
+        var btn   = this;
+        var email = localStorage.getItem('meetlingo_email');
+        var label = document.getElementById('ml-ended-exit');
+
+        if (email) {
+            btn.disabled = true;
+            if (label) label.textContent = 'Sending summary…';
+            try {
+                await fetch('/api/send-summary-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+            } catch (e) { /* non-blocking — navigate anyway */ }
+        }
+
         window.location.href = 'confirmation.html';
     });
 

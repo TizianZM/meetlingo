@@ -524,7 +524,7 @@
                     localStorage.setItem('meetlingo_meeting_end', Date.now().toString());
                     localStorage.removeItem('meetlingo_meeting_active');
                     fetch('/api/meeting-end', { method: 'POST' }); // signal server → listeners detect end
-                    window.location.href = 'confirmation.html';
+                    window.location.href = 'confirmation.html?host=1';
                 }
             );
         }
