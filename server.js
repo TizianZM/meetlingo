@@ -244,7 +244,7 @@ app.post('/api/reset-session', express.json(), (req, res) => {
   meetingEndTime = null;
   recentTexts = new Map();
   recentContext = [];
-  meetingAgenda = '';
+  // meetingAgenda intentionally NOT cleared — host may reload before saving again
   allTranscriptions = [];
   peakListenerLangs = new Set();
   res.json({ success: true });
