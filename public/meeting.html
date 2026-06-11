@@ -365,8 +365,7 @@
         // Use server-fetched text first, fall back to localStorage (host device only)
         var original = serverAgendaText || localStorage.getItem('meetlingo_agenda');
         if (!original || !original.trim()) return;
-        // English (or no lang) → show as-is
-        if (!lang || lang === 'English') { displayAgendaText(original); return; }
+        if (!lang) { displayAgendaText(original); return; }
         // Use cache if available
         if (agendaCache[lang]) { displayAgendaText(agendaCache[lang]); return; }
         try {
