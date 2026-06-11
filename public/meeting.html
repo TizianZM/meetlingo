@@ -385,20 +385,36 @@
         }
     }
 
-    // ── Load agenda from server (works cross-device) ──
+    // ── Load agenda from server (polls until populated) ──
     (function() {
         var el = document.getElementById('agenda-display');
         if (!el) return;
-        fetch('/api/agenda')
-            .then(function(r) { return r.json(); })
-            .then(function(d) {
-                if (d.agenda && d.agenda.trim()) {
-                    serverAgendaText = d.agenda; // store for translateAgenda
-                    var lang = localStorage.getItem('meetlingo_lang') || 'English';
-                    translateAgenda(lang); // handles both English (no-op) and other langs
-                }
-            })
-            .catch(function(e) { console.warn('[Agenda] Load failed:', e); });
+        var agendaPollTimer = null;
+
+        function fetchAgenda() {
+            fetch('/api/agenda')
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.agenda && d.agenda.trim()) {
+                        // Only re-translate if text changed
+                        if (d.agenda !== serverAgendaText) {
+                            serverAgendaText = d.agenda;
+                            agendaCache = {}; // clear stale cache when agenda changes
+                            var lang = localStorage.getItem('meetlingo_lang') || 'English';
+                            translateAgenda(lang);
+                        }
+                    }
+                })
+                .catch(function(e) { console.warn('[Agenda] Load failed:', e); });
+        }
+
+        fetchAgenda(); // immediate first fetch
+        agendaPollTimer = setInterval(fetchAgenda, 5000); // re-poll every 5s
+
+        // Stop polling once meeting ends (avoids unnecessary requests)
+        window.stopAgendaPolling = function() {
+            if (agendaPollTimer) { clearInterval(agendaPollTimer); agendaPollTimer = null; }
+        };
     })();
 
     // ── Agenda Toggle ─────────────────────────────
@@ -463,6 +479,7 @@
     };
 
     function showHostEndedOverlay() {
+        if (window.stopAgendaPolling) window.stopAgendaPolling();
         if (window.TranslationManager) window.TranslationManager.stopTranslation();
         var lang = localStorage.getItem('meetlingo_lang') || 'English';
         var t = HOST_END_T[lang] || HOST_END_T['English'];
@@ -497,6 +514,7 @@
     var intentionalLeave = false;
     function doLeave() {
         intentionalLeave = true;
+        if (window.stopAgendaPolling) window.stopAgendaPolling();
         if (window.TranslationManager) window.TranslationManager.stopTranslation();
         localStorage.setItem('meetlingo_meeting_end', Date.now().toString());
         window.location.href = 'ended.html';
