@@ -169,9 +169,15 @@
     </div>
     <div style="margin-bottom:22px;">
       <label style="display:block;font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;font-family:'Source Sans 3',sans-serif;">Password</label>
-      <input id="host-auth-pass" type="password" autocomplete="current-password"
-        style="width:100%;padding:12px 14px;border:1.5px solid #EEEEEE;border-radius:10px;font-size:15px;font-family:'Source Sans 3',sans-serif;color:#1a1c1c;background:#fff;box-sizing:border-box;outline:none;"
-        placeholder="Password" />
+      <div style="position:relative;">
+        <input id="host-auth-pass" type="password" autocomplete="current-password"
+          style="width:100%;padding:12px 44px 12px 14px;border:1.5px solid #EEEEEE;border-radius:10px;font-size:15px;font-family:'Source Sans 3',sans-serif;color:#1a1c1c;background:#fff;box-sizing:border-box;outline:none;"
+          placeholder="Password" />
+        <button id="host-auth-eye" type="button" tabindex="-1"
+          style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;color:#aaa;">
+          <span id="host-auth-eye-icon" class="material-symbols-outlined" style="font-size:20px;font-variation-settings:'FILL' 0;">visibility</span>
+        </button>
+      </div>
     </div>
     <div id="host-auth-error" style="display:none;background:#fde8e8;border-radius:8px;padding:10px 14px;font-size:13px;color:#c0392b;font-family:'Source Sans 3',sans-serif;font-weight:600;margin-bottom:14px;text-align:center;">
       Incorrect username or password.
@@ -214,6 +220,15 @@
     authBtn.addEventListener('click', attempt);
     passInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') attempt(); });
     userInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') passInput.focus(); });
+
+    var eyeBtn  = document.getElementById('host-auth-eye');
+    var eyeIcon = document.getElementById('host-auth-eye-icon');
+    eyeBtn.addEventListener('click', function() {
+      var show = passInput.type === 'password';
+      passInput.type = show ? 'text' : 'password';
+      eyeIcon.textContent = show ? 'visibility_off' : 'visibility';
+      eyeIcon.style.color = show ? '#95C11E' : '#aaa';
+    });
   })();
 </script>
 
@@ -250,15 +265,6 @@
       <div id="active-mute-label" style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Live</div>
     </div>
   </div>
-  <!-- QR Code compact — for latecomers -->
-  <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;width:100%;display:flex;align-items:center;gap:16px;">
-    <div id="qr-container-active" style="width:80px;height:80px;flex-shrink:0;"></div>
-    <div style="flex:1;min-width:0;">
-      <div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">Join Link</div>
-      <p id="qr-url-active" style="font-size:11px;color:#4b6400;font-weight:600;margin:0 0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Source Sans 3',sans-serif;"></p>
-      <button id="qr-copy-btn-active" style="background:#95C11E;color:white;border:none;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Source Sans 3',sans-serif;">Copy</button>
-    </div>
-  </div>
   <div style="background:#fff;border:1px solid #eee;border-radius:12px;width:100%;overflow:hidden;">
     <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fafafa;border-bottom:1px solid #f0f0f0;">
       <span class="material-symbols-outlined" style="color:#95C11E;font-size:18px;">transcribe</span>
@@ -267,6 +273,16 @@
     </div>
     <div id="active-transcript" style="padding:12px 16px;min-height:100px;max-height:200px;overflow-y:auto;">
       <p id="active-placeholder" style="color:#aaa;font-size:14px;font-style:italic;">Start speaking...</p>
+    </div>
+  </div>
+  <!-- QR Code — full size, for latecomers to scan -->
+  <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:24px;width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;">
+    <div style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.07em;">Join Meeting</div>
+    <div id="qr-container-active" style="width:160px;height:160px;"></div>
+    <p style="font-size:12px;color:#666;margin:0;font-family:'Source Sans 3',sans-serif;">Scan to join on your device</p>
+    <div style="display:flex;align-items:center;gap:6px;background:#f5f5f5;border-radius:8px;padding:7px 10px;width:100%;max-width:280px;box-sizing:border-box;">
+      <p id="qr-url-active" style="font-size:11px;color:#4b6400;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;font-family:'Source Sans 3',sans-serif;"></p>
+      <button id="qr-copy-btn-active" style="background:#95C11E;color:white;border:none;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Source Sans 3',sans-serif;">Copy</button>
     </div>
   </div>
 </div>
@@ -613,7 +629,7 @@
     var urlLabelActive  = document.getElementById('qr-url-active');
     var copyBtnActive   = document.getElementById('qr-copy-btn-active');
     if (containerActive && typeof QRCode !== 'undefined') {
-      new QRCode(containerActive, { text: meetingUrl, width: 80, height: 80, colorDark: '#1A1A1A', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.M });
+      new QRCode(containerActive, { text: meetingUrl, width: 160, height: 160, colorDark: '#1A1A1A', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.M });
     }
     if (urlLabelActive) urlLabelActive.textContent = meetingUrl;
     if (copyBtnActive) {
