@@ -1,13 +1,14 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const WebSocket = require('ws');
 require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
 
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json({ limit: '10mb' })); // base64 WAV audio can be several MB for longer phrases
+app.use(express.json({ limit: '10mb' }));
 
 // ── OpenAI ───────────────────────────────────────────
 const { OpenAI } = require('openai');
@@ -17,240 +18,39 @@ function getOpenAI() {
   return new OpenAI({ apiKey: key });
 }
 
-// ── Resend (email) ────────────────────────────────────
-const { Resend } = require('resend');
-function getResend() {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) throw new Error('RESEND_API_KEY environment variable is not set');
-  return new Resend(key);
-}
-
-// ── Verification codes ────────────────────────────────
-// email → { code, expires }  (10-minute TTL, cleaned on use)
-const pendingCodes = new Map();
-
-function generateCode() {
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
-
-// ── PDF generation ────────────────────────────────────
-const PDFDocument = require('pdfkit');
-const SVGtoPDF   = require('svg-to-pdfkit');
-const https      = require('https');
-
-let _zimmLogoSvg = null;
-function fetchZimmLogo() {
-  if (_zimmLogoSvg) return Promise.resolve(_zimmLogoSvg);
-  return new Promise((resolve) => {
-    https.get('https://zimm.com/wp-content/uploads/2023/08/zimm-group.svg', (res) => {
-      let d = '';
-      res.on('data', c => d += c);
-      res.on('end', () => { _zimmLogoSvg = d; resolve(d); });
-    }).on('error', () => resolve(null));
-  });
-}
-
-async function generateMeetingPDF({ startTime, endTime, agenda, transcriptions, languages, summary }) {
-  const logoSvg = await fetchZimmLogo();
-  return new Promise((resolve) => {
-    const doc = new PDFDocument({ size: 'A4', margins: { top: 60, bottom: 60, left: 60, right: 60 } });
-    const bufs = [];
-    doc.on('data', b => bufs.push(b));
-    doc.on('end',  () => resolve(Buffer.concat(bufs)));
-
-    const W = doc.page.width - 120; // usable width
-
-    // ── Header ──────────────────────────────────────────
-    if (logoSvg) {
-      try { SVGtoPDF(doc, logoSvg, 60, 58, { width: 160, height: 22 }); } catch {}
-    }
-    doc.fontSize(9).fillColor('#888888').font('Helvetica')
-       .text('MEETING REPORT', 60, 65, { width: W, align: 'right' });
-    doc.moveDown(0.4);
-
-    // ── Thin divider ─────────────────────────────────────
-    const lineY = () => doc.y;
-    const rule  = () => {
-      doc.moveTo(60, lineY()).lineTo(60 + W, lineY()).lineWidth(0.5).strokeColor('#DDDDDD').stroke();
-      doc.moveDown(0.6);
-    };
-
-    doc.y = 95;
-    rule();
-
-    // ── Title ────────────────────────────────────────────
-    doc.fontSize(22).fillColor('#1a1a1a').font('Helvetica-Bold')
-       .text('Meeting Summary', 60, doc.y, { width: W });
-    doc.moveDown(0.3);
-
-    // ── Date / Duration ──────────────────────────────────
-    const start    = new Date(startTime);
-    const end      = new Date(endTime || Date.now());
-    const durSec   = Math.max(0, Math.floor((end - start) / 1000));
-    const durMin   = Math.floor(durSec / 60);
-    const durLabel = durMin > 0 ? `${durMin} min ${String(durSec % 60).padStart(2,'0')} s` : `${durSec} s`;
-    const dateStr  = start.toLocaleDateString('de-AT', { day:'2-digit', month:'long', year:'numeric' });
-    const timeStr  = start.toLocaleTimeString('de-AT', { hour:'2-digit', minute:'2-digit' }) + ' Uhr';
-
-    doc.fontSize(10).fillColor('#555555').font('Helvetica');
-    const metaLeft  = 60;
-    const metaRight = 60 + W / 2;
-    const metaY     = doc.y + 4;
-
-    // Left column
-    const field = (label, value, x, y) => {
-      doc.fontSize(8).fillColor('#999').font('Helvetica').text(label.toUpperCase(), x, y);
-      doc.fontSize(11).fillColor('#1a1a1a').font('Helvetica-Bold').text(value, x, doc.y + 1);
-    };
-
-    field('Date',      dateStr,   metaLeft,  metaY);
-    const afterDate = doc.y + 10;
-    field('Start',     timeStr,   metaLeft,  afterDate);
-    const afterTime = doc.y + 10;
-    field('Duration',  durLabel,  metaLeft,  afterTime);
-
-    field('Location',  'Virtual Meeting — MeetLingo',  metaRight, metaY);
-    const afterLoc = doc.y + 10;
-    field('Languages', languages.length ? languages.join(', ') : '—', metaRight, afterLoc);
-
-    doc.y = Math.max(doc.y, afterTime + 24) + 8;
-    rule();
-
-    // ── Agenda ───────────────────────────────────────────
-    if (agenda && agenda.trim()) {
-      doc.fontSize(11).fillColor('#95C11E').font('Helvetica-Bold').text('AGENDA', 60, doc.y);
-      doc.moveDown(0.4);
-      doc.fontSize(11).fillColor('#1a1a1a').font('Helvetica').text(agenda.trim(), 60, doc.y, { width: W, lineGap: 3 });
-      doc.moveDown(0.8);
-      rule();
-    }
-
-    // ── Meeting Summary ───────────────────────────────────
-    doc.fontSize(11).fillColor('#95C11E').font('Helvetica-Bold').text('MEETING SUMMARY', 60, doc.y);
-    doc.moveDown(0.4);
-    doc.fontSize(11).fillColor('#333333').font('Helvetica')
-       .text(summary || 'No summary available.', 60, doc.y, { width: W, lineGap: 3, align: 'justify' });
-    doc.moveDown(1);
-
-    // ── Transcription Highlights ──────────────────────────
-    if (transcriptions && transcriptions.length > 0) {
-      rule();
-      doc.fontSize(11).fillColor('#95C11E').font('Helvetica-Bold').text('TRANSCRIPT EXCERPTS', 60, doc.y);
-      doc.moveDown(0.4);
-      transcriptions.slice(0, 20).forEach((t, i) => {
-        doc.fontSize(9).fillColor('#777').font('Helvetica').text(`[${i+1}]`, 60, doc.y, { continued: true });
-        doc.fontSize(10).fillColor('#333').font('Helvetica').text('  ' + t, { width: W - 20, lineGap: 2 });
-        doc.moveDown(0.15);
-      });
-    }
-
-    // ── Footer ────────────────────────────────────────────
-    const footerY = doc.page.height - 50;
-    doc.moveTo(60, footerY).lineTo(60 + W, footerY).lineWidth(0.5).strokeColor('#DDDDDD').stroke();
-    doc.fontSize(8).fillColor('#AAAAAA').font('Helvetica')
-       .text(`Generated by MeetLingo · ZIMM GmbH · zimm.com · ${new Date().toISOString().slice(0,10)}`, 60, footerY + 8, { width: W, align: 'center' });
-
-    doc.end();
-  });
-}
-
 // ── In-memory session state ───────────────────────────
-let listenerSessions = new Map(); // sessionId → { lang, lastSeen }
-let textQueue = [];               // { id, lang, original, translated }
-let nextChunkId = 1;
-let meetingActive = false;
-let meetingStartTime = null;      // set when host presses START — used for cross-device timer sync
-let recentTexts = new Map();      // text → timestamp — dedup within 30s
-let recentContext = [];           // rolling last 3 transcriptions for GPT context
-let meetingAgenda = '';           // set by host via /api/agenda
-let allTranscriptions = [];       // full transcript log for summary/PDF
-let meetingEndTime = null;
-let peakListenerLangs = new Set();// languages seen during the meeting
+let listenerSessions = new Map();
+let textQueue        = [];
+let nextChunkId      = 1;
+let meetingActive    = false;
+let meetingStartTime = null;
+let recentTexts      = new Map();
+let recentContext    = [];
+let meetingAgenda    = '';
 
-const SESSION_TIMEOUT = 60000; // ms — 60s buffer for Safari timer throttling
+const SESSION_TIMEOUT = 60000;
 
-// Derive currently active languages from live sessions
 function getActiveLangs() {
   const now = Date.now();
   const langs = new Set();
-  listenerSessions.forEach((session) => {
-    if (now - session.lastSeen < SESSION_TIMEOUT) langs.add(session.lang);
-  });
+  listenerSessions.forEach((s) => { if (now - s.lastSeen < SESSION_TIMEOUT) langs.add(s.lang); });
   return [...langs];
 }
 
-// ── Email verification ────────────────────────────────
-
-app.post('/api/send-code', express.json(), async (req, res) => {
-  const { email } = req.body;
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return res.json({ success: false, error: 'Invalid email address' });
-  }
-  const code = generateCode();
-  pendingCodes.set(email.toLowerCase(), { code, expires: Date.now() + 10 * 60 * 1000 });
-
-  try {
-    await getResend().emails.send({
-      from: 'MeetLingo <onboarding@resend.dev>',
-      to: email,
-      subject: `Your MeetLingo code: ${code}`,
-      html: `
-        <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f9f9f9;">
-          <div style="text-align:center;margin-bottom:28px;">
-            <span style="font-size:24px;font-weight:700;color:#95C11E;">MeetLingo</span>
-            <span style="font-size:13px;color:#A77F4E;margin-left:4px;">by ZIMM</span>
-          </div>
-          <div style="background:#fff;border-radius:16px;padding:32px 24px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
-            <p style="font-size:16px;color:#444;margin:0 0 24px;">Your verification code is:</p>
-            <div style="font-size:48px;font-weight:700;letter-spacing:12px;color:#1a1c1c;margin-bottom:24px;">${code}</div>
-            <p style="font-size:13px;color:#999;margin:0;">Valid for 10 minutes. Do not share this code.</p>
-          </div>
-          <p style="text-align:center;font-size:12px;color:#bbb;margin-top:24px;">MeetLingo &mdash; Real-time meeting translation</p>
-        </div>
-      `,
-    });
-    res.json({ success: true });
-  } catch (err) {
-    console.error('[Email] Send failed:', err.message);
-    res.json({ success: false, error: 'Failed to send email' });
-  }
-});
-
-app.post('/api/verify-code', express.json(), (req, res) => {
-  const { email, code } = req.body;
-  const key = (email || '').toLowerCase();
-  const entry = pendingCodes.get(key);
-  if (!entry) return res.json({ success: false, error: 'No code sent to this email' });
-  if (Date.now() > entry.expires) {
-    pendingCodes.delete(key);
-    return res.json({ success: false, error: 'Code expired — request a new one' });
-  }
-  if (entry.code !== String(code).trim()) {
-    return res.json({ success: false, error: 'Incorrect code' });
-  }
-  pendingCodes.delete(key);
-  res.json({ success: true });
-});
-
 // ── Session management ────────────────────────────────
 
-// Reset (called when host loads page)
 app.post('/api/reset-session', express.json(), (req, res) => {
   listenerSessions = new Map();
-  textQueue = [];
-  nextChunkId = 1;
-  meetingActive = false;
+  textQueue        = [];
+  nextChunkId      = 1;
+  meetingActive    = false;
   meetingStartTime = null;
-  meetingEndTime = null;
-  recentTexts = new Map();
-  recentContext = [];
-  // meetingAgenda intentionally NOT cleared — host may reload before saving again
-  allTranscriptions = [];
-  peakListenerLangs = new Set();
+  recentTexts      = new Map();
+  recentContext    = [];
+  // meetingAgenda intentionally NOT cleared
   res.json({ success: true });
 });
 
-// Agenda: host saves, listeners fetch
 app.post('/api/agenda', express.json(), (req, res) => {
   meetingAgenda = req.body.agenda || '';
   res.json({ success: true });
@@ -260,285 +60,57 @@ app.get('/api/agenda', (req, res) => {
   res.json({ agenda: meetingAgenda });
 });
 
-// Host starts meeting
 app.post('/api/meeting-start', express.json(), (req, res) => {
-  meetingActive = true;
+  meetingActive    = true;
   meetingStartTime = Date.now();
   console.log('[Session] Meeting started at', meetingStartTime);
   res.json({ success: true });
 });
 
-// Host ends meeting — listeners detect this via /api/meeting-status poll
 app.post('/api/meeting-end', (req, res) => {
   meetingActive = false;
-  meetingEndTime = Date.now();
   console.log('[Session] Meeting ended');
   res.json({ success: true });
 });
 
-// Returns snapshot of meeting data for summary/confirmation page
-app.get('/api/meeting-summary', (req, res) => {
-  const langs = peakListenerLangs.size > 0
-    ? [...peakListenerLangs]
-    : getActiveLangs();
-  res.json({
-    startTime:       meetingStartTime,
-    endTime:         meetingEndTime || Date.now(),
-    agenda:          meetingAgenda,
-    transcriptions:  allTranscriptions,
-    languages:       langs,
-  });
-});
-
-// Generates PDF + sends summary email to listener
-app.post('/api/send-summary-email', express.json(), async (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.json({ success: false, error: 'No email provided' });
-
-  const langs        = peakListenerLangs.size > 0 ? [...peakListenerLangs] : getActiveLangs();
-  const startTime    = meetingStartTime || Date.now();
-  const endTime      = meetingEndTime   || Date.now();
-  const durSec       = Math.max(0, Math.floor((endTime - startTime) / 1000));
-  const durMin       = Math.floor(durSec / 60);
-  const durLabel     = durMin > 0 ? `${durMin} min ${String(durSec % 60).padStart(2,'0')} s` : `${durSec} s`;
-  const dateStr      = new Date(startTime).toLocaleDateString('de-AT', { day:'2-digit', month:'long', year:'numeric' });
-
-  try {
-    // Generate GPT summary from all transcriptions
-    let gptSummary = 'No transcript available for this meeting.';
-    if (allTranscriptions.length > 0) {
-      const transcript = allTranscriptions.join(' | ');
-      const result = await getOpenAI().chat.completions.create({
-        model: 'gpt-4o-mini', max_tokens: 400, temperature: 0.3,
-        messages: [
-          { role: 'system', content: 'You are a professional meeting secretary. Write a concise, formal meeting summary in English (3-5 sentences) based on the provided transcript. Focus on main topics, decisions, and action items.' },
-          { role: 'user', content: `Transcript: ${transcript}` }
-        ]
-      });
-      gptSummary = result.choices[0].message.content;
-    }
-
-    // Generate PDF
-    const pdfBuffer = await generateMeetingPDF({
-      startTime, endTime,
-      agenda:          meetingAgenda,
-      transcriptions:  allTranscriptions,
-      languages:       langs,
-      summary:         gptSummary,
-    });
-
-    // Send email with PDF attachment
-    await getResend().emails.send({
-      from: 'MeetLingo <onboarding@resend.dev>',
-      to: email,
-      subject: `Meeting Summary — ${dateStr}`,
-      html: `
-        <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#f9f9f9;">
-          <div style="text-align:center;margin-bottom:28px;">
-            <span style="font-size:24px;font-weight:700;color:#95C11E;">MeetLingo</span>
-            <span style="font-size:13px;color:#A77F4E;margin-left:4px;">by ZIMM</span>
-          </div>
-          <div style="background:#fff;border-radius:16px;padding:32px 28px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
-            <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:0 0 6px;">Meeting Summary</h2>
-            <p style="font-size:13px;color:#888;margin:0 0 24px;">${dateStr} &nbsp;·&nbsp; ${durLabel} &nbsp;·&nbsp; ${langs.join(', ') || '—'}</p>
-            ${meetingAgenda ? `<div style="border-left:3px solid #95C11E;padding:10px 14px;background:#f8fff0;border-radius:0 8px 8px 0;margin-bottom:20px;"><p style="font-size:12px;font-weight:700;color:#95C11E;margin:0 0 6px;text-transform:uppercase;">Agenda</p><p style="font-size:13px;color:#333;margin:0;white-space:pre-line;">${meetingAgenda}</p></div>` : ''}
-            <p style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;margin:0 0 8px;">Summary</p>
-            <p style="font-size:14px;color:#333;line-height:1.7;margin:0 0 20px;">${gptSummary}</p>
-            <p style="font-size:12px;color:#aaa;margin:0;">The full meeting report is attached as a PDF.</p>
-          </div>
-          <p style="text-align:center;font-size:11px;color:#bbb;margin-top:20px;">ZIMM GmbH · zimm.com · MeetLingo</p>
-        </div>
-      `,
-      attachments: [{
-        filename: `MeetLingo-Summary-${new Date(startTime).toISOString().slice(0,10)}.pdf`,
-        content:  pdfBuffer.toString('base64'),
-      }],
-    });
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error('[Summary] Email failed:', err.message);
-    res.json({ success: false, error: err.message });
-  }
-});
-
-// Quick GPT summary for host confirmation page (no PDF, no email)
-app.get('/api/generate-host-summary', async (req, res) => {
-  if (allTranscriptions.length === 0) return res.json({ summary: null });
-  try {
-    const transcript = allTranscriptions.join(' | ');
-    const result = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o-mini', max_tokens: 300, temperature: 0.3,
-      messages: [
-        { role: 'system', content: 'Write a concise, formal meeting summary in English (3-4 sentences). Focus on main topics and key points discussed.' },
-        { role: 'user', content: `Transcript: ${transcript}` }
-      ]
-    });
-    res.json({ summary: result.choices[0].message.content });
-  } catch (err) {
-    res.json({ summary: null, error: err.message });
-  }
-});
-
-// Poll meeting status (listener waiting screen)
 app.get('/api/meeting-status', (req, res) => {
   res.json({ active: meetingActive });
 });
 
-// Returns server-side meeting start timestamp for cross-device timer sync
 app.get('/api/meeting-time', (req, res) => {
   res.json({ startTime: meetingStartTime });
 });
 
-// ── Listener endpoints ────────────────────────────────
-
-// Register / keepalive (called every 8s by listener)
-// Returns currentId so listener starts from "now" instead of chunk 0 on rejoin
 app.post('/api/listener-register', express.json(), (req, res) => {
   const { lang, sessionId } = req.body;
-  if (lang && sessionId) {
-    listenerSessions.set(sessionId, { lang, lastSeen: Date.now() });
-    peakListenerLangs.add(lang); // track all languages ever connected
-  }
+  if (lang && sessionId) listenerSessions.set(sessionId, { lang, lastSeen: Date.now() });
   res.json({ success: true, currentId: nextChunkId - 1 });
 });
 
-// Active listener counts per language (host dashboard)
 app.get('/api/listener-stats', (req, res) => {
-  const now = Date.now();
+  const now    = Date.now();
   const counts = {};
-  listenerSessions.forEach((session) => {
-    if (now - session.lastSeen < SESSION_TIMEOUT) {
-      counts[session.lang] = (counts[session.lang] || 0) + 1;
-    }
+  // Include both REST and WS participants
+  listenerSessions.forEach((s) => {
+    if (now - s.lastSeen < SESSION_TIMEOUT) counts[s.lang] = (counts[s.lang] || 0) + 1;
+  });
+  wsParticipants.forEach((p) => {
+    if (p.role === 'listener') counts[p.lang] = (counts[p.lang] || 0) + 1;
   });
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   res.json({ counts, total });
 });
 
-// Poll for new translated text chunks
 app.get('/api/listener-poll', (req, res) => {
   const { lang, after } = req.query;
   const afterId = parseInt(after) || 0;
-  const chunks = textQueue
+  const chunks  = textQueue
     .filter(c => c.lang === lang && c.id > afterId)
     .map(c => ({ id: c.id, original: c.original, translated: c.translated }));
   res.json({ chunks });
 });
 
-// ── Host translation pipeline ─────────────────────────
-// Audio → Whisper (transcribe once) → GPT-4o-mini × active langs (parallel, no TTS)
-const LANG_TO_ISO = {
-  'English': 'en', 'German': 'de', 'Spanish': 'es', 'French': 'fr',
-  'Italian': 'it', 'Japanese': 'ja', 'Portuguese': 'pt', 'Turkish': 'tr',
-  'Dutch': 'nl', 'Korean': 'ko', 'Chinese': 'zh', 'Arabic': 'ar',
-  'Russian': 'ru', 'Polish': 'pl', 'Swedish': 'sv', 'Hindi': 'hi',
-  'Greek': 'el', 'Ukrainian': 'uk',
-};
-
-app.post('/api/host-translate', express.json(), async (req, res) => {
-  const { audio, hostLang } = req.body;
-  const whisperLang = LANG_TO_ISO[hostLang] || hostLang || 'de'; // convert "English" → "en"
-  try {
-    const audioBuffer = Buffer.from(audio, 'base64');
-    const { Readable } = require('stream');
-    const stream = Readable.from(audioBuffer);
-    stream.path = 'audio.wav';
-
-    const transcription = await getOpenAI().audio.transcriptions.create({
-      file: stream,
-      model: 'whisper-1',
-      language: whisperLang,  // dynamic — set by host in presenter language selector
-      temperature: 0,         // deterministic, fewer hallucinations
-    });
-    const originalText = transcription.text ? transcription.text.trim() : '';
-    console.log('[Host] Transcribed:', originalText);
-
-    // Filter: skip empty, too short, or known Whisper hallucinations
-    // These are phrases Whisper generates from silence/noise based on training data
-    const HALLUCINATIONS = [
-      // Greetings/closings
-      'Danke.', 'Danke schön.', 'Vielen Dank.', 'Tschüss.', 'Auf Wiedersehen.',
-      'Bitte.', 'Gern geschehen.',
-      'Thank you.', 'Thanks for watching.', 'Thanks for listening.',
-      'You\'re welcome.',
-      // Subtitle credits (very common Whisper hallucination from video training data)
-      'Untertitel von', 'Untertitel: ', 'Untertitel der Amara', 'Untertitel im Auftrag',
-      'Untertitelung', 'UT:', 'Übersetzt von', 'Übertitel',
-      'Amara.org', 'amara.org',
-      'ZDF', 'funk,',
-      // Other known hallucinations
-      'www.', '.com', '.de', '.org',
-      'Copyright', '©',
-      'Subtitles by', 'Subtitled by', 'Closed captions',
-    ];
-    // Also block anything that's just punctuation, numbers, or single words under 3 chars
-    const isJunk = /^[\s.,!?…\-–—]+$/.test(originalText);
-    const isHallucination = HALLUCINATIONS.some(h => originalText === h || originalText.startsWith(h) || originalText.includes(h));
-    if (!originalText || originalText.length < 4 || isHallucination || isJunk) {
-      console.log('[Host] Skipped (hallucination/junk):', originalText);
-      return res.json({ success: false });
-    }
-
-    // Dedup: skip if identical text was sent within the last 30 seconds
-    const now = Date.now();
-    const lastSeen = recentTexts.get(originalText);
-    if (lastSeen && now - lastSeen < 30000) {
-      console.log('[Host] Skipped (duplicate):', originalText);
-      return res.json({ success: false });
-    }
-    recentTexts.set(originalText, now);
-    // Clean up old entries to prevent memory leak
-    if (recentTexts.size > 100) {
-      const cutoff = now - 30000;
-      recentTexts.forEach((ts, text) => { if (ts < cutoff) recentTexts.delete(text); });
-    }
-
-    // Store for summary/PDF (cap at 500 entries)
-    allTranscriptions.push(originalText);
-    if (allTranscriptions.length > 500) allTranscriptions.shift();
-
-    // Respond immediately to host with transcription
-    res.json({ success: true, original: originalText });
-
-    // Update rolling context (last 3 sentences)
-    recentContext.push(originalText);
-    if (recentContext.length > 3) recentContext.shift();
-
-    // Only translate for languages with currently active listeners
-    const langs = getActiveLangs();
-    if (langs.length === 0) return;
-
-    // Build context string for GPT (previous sentences, if any)
-    const contextBlock = recentContext.length > 1
-      ? `\nFor context, the previous sentences were:\n${recentContext.slice(0, -1).join('\n')}\n\nNow translate:`
-      : '';
-
-    await Promise.all(langs.map(async (lang) => {
-      try {
-        const translation = await getOpenAI().chat.completions.create({
-          model: 'gpt-4o-mini', max_tokens: 200, temperature: 0,
-          messages: [
-            { role: 'system', content: `You are a professional live interpreter. Translate the spoken text to ${lang}. Output ONLY the translated text, nothing else. Keep it natural and conversational.${contextBlock}` },
-            { role: 'user', content: originalText }
-          ]
-        });
-        const translatedText = translation.choices[0].message.content;
-        textQueue.push({ id: nextChunkId++, lang, original: originalText, translated: translatedText });
-        if (textQueue.length > 500) textQueue.shift();
-        console.log('[Host] →', lang, ':', translatedText);
-      } catch (e) {
-        console.error('[Host] Lang error:', lang, e.message);
-      }
-    }));
-
-  } catch (err) {
-    console.error('[Host] Error:', err.message);
-    if (!res.headersSent) res.json({ success: false, error: err.message });
-  }
-});
-
-// ── Text translation (agenda, UI strings) ─────────────
+// ── Text translation (agenda, UI) ─────────────────────
 app.post('/api/translate-text', express.json(), async (req, res) => {
   const { text, targetLanguage } = req.body;
   if (!text || !targetLanguage) return res.json({ success: false });
@@ -547,7 +119,7 @@ app.post('/api/translate-text', express.json(), async (req, res) => {
       model: 'gpt-4o-mini', max_tokens: 500, temperature: 0,
       messages: [
         { role: 'system', content: `Translate the following text to ${targetLanguage}. Output ONLY the translated text. Preserve line breaks and formatting. No explanations.` },
-        { role: 'user', content: text }
+        { role: 'user',   content: text }
       ]
     });
     res.json({ success: true, translation: result.choices[0].message.content });
@@ -555,6 +127,212 @@ app.post('/api/translate-text', express.json(), async (req, res) => {
     console.error('[TranslateText] Error:', err.message);
     res.json({ success: false, error: err.message });
   }
+});
+
+// ── WebSocket Meeting Server ──────────────────────────
+const wss = new WebSocket.Server({ noServer: true });
+
+// WS participants: clientWs → { lang, role, id }
+const wsParticipants = new Map();
+
+// OpenAI translate sessions per target language: lang → { ws, audioBuf, transcriptBuf, active }
+const translateSessions = new Map();
+
+server.on('upgrade', (req, socket, head) => {
+  if (req.url === '/ws/meeting') {
+    wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws));
+  } else {
+    socket.destroy();
+  }
+});
+
+function buildWAV(pcmBuffer, sampleRate) {
+  const dataLen = pcmBuffer.length;
+  const buf = Buffer.alloc(44 + dataLen);
+  buf.write('RIFF', 0);
+  buf.writeUInt32LE(36 + dataLen, 4);
+  buf.write('WAVE', 8);
+  buf.write('fmt ', 12);
+  buf.writeUInt32LE(16, 16);
+  buf.writeUInt16LE(1,  20); // PCM
+  buf.writeUInt16LE(1,  22); // mono
+  buf.writeUInt32LE(sampleRate,     24);
+  buf.writeUInt32LE(sampleRate * 2, 28);
+  buf.writeUInt16LE(2,  32);
+  buf.writeUInt16LE(16, 34);
+  buf.write('data', 36);
+  buf.writeUInt32LE(dataLen, 40);
+  pcmBuffer.copy(buf, 44);
+  return buf;
+}
+
+function broadcastToLang(targetLang, msg) {
+  const str = JSON.stringify(msg);
+  wsParticipants.forEach((p, ws) => {
+    if (p.lang === targetLang && ws.readyState === WebSocket.OPEN) ws.send(str);
+  });
+}
+
+function broadcastAll(msg) {
+  const str = JSON.stringify(msg);
+  wsParticipants.forEach((p, ws) => {
+    if (ws.readyState === WebSocket.OPEN) ws.send(str);
+  });
+}
+
+function openTranslateSession(targetLang) {
+  if (translateSessions.has(targetLang)) return;
+
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) { console.error('[Realtime] Missing OPENAI_API_KEY'); return; }
+
+  const openaiWs = new WebSocket(
+    'wss://api.openai.com/v1/realtime?model=gpt-realtime-translate',
+    { headers: { 'Authorization': `Bearer ${key}`, 'OpenAI-Beta': 'realtime=v1' } }
+  );
+
+  const session = { ws: openaiWs, audioBuf: [], transcriptBuf: '', active: false };
+  translateSessions.set(targetLang, session);
+
+  openaiWs.on('open', () => {
+    console.log(`[Realtime] Connected → ${targetLang}`);
+    openaiWs.send(JSON.stringify({
+      type: 'session.update',
+      session: {
+        modalities: ['audio', 'text'],
+        instructions: `You are a live simultaneous interpreter. Translate all incoming speech to ${targetLang}. Output only the spoken translation — no explanations, no commentary, no metadata.`,
+        input_audio_format: 'pcm16',
+        output_audio_format: 'pcm16',
+        turn_detection: {
+          type: 'server_vad',
+          threshold: 0.5,
+          prefix_padding_ms: 300,
+          silence_duration_ms: 600,
+          create_response: true
+        }
+      }
+    }));
+    session.active = true;
+  });
+
+  openaiWs.on('message', (raw) => {
+    try {
+      const evt = JSON.parse(raw.toString());
+
+      if (evt.type === 'response.audio.delta' && evt.delta) {
+        session.audioBuf.push(Buffer.from(evt.delta, 'base64'));
+      }
+      else if (evt.type === 'response.audio_transcript.delta' && evt.delta) {
+        session.transcriptBuf += evt.delta;
+      }
+      else if (evt.type === 'response.audio.done') {
+        if (session.audioBuf.length > 0) {
+          const pcm        = Buffer.concat(session.audioBuf);
+          session.audioBuf = [];
+          const transcript        = session.transcriptBuf;
+          session.transcriptBuf   = '';
+          const wav  = buildWAV(pcm, 24000);
+          const b64  = wav.toString('base64');
+          broadcastToLang(targetLang, { type: 'audio', audio: b64, transcript });
+          console.log(`[Realtime] → ${targetLang}: ${pcm.length}B${transcript ? ' "' + transcript.slice(0, 40) + '"' : ''}`);
+        }
+      }
+      else if (evt.type === 'error') {
+        console.error(`[Realtime] Error (${targetLang}):`, evt.error?.message || JSON.stringify(evt.error));
+        broadcastToLang(targetLang, { type: 'error', message: evt.error?.message || 'Translation error' });
+      }
+    } catch (e) {
+      console.error('[Realtime] Parse error:', e.message);
+    }
+  });
+
+  openaiWs.on('close', (code) => {
+    console.log(`[Realtime] Closed for ${targetLang}: ${code}`);
+    translateSessions.delete(targetLang);
+  });
+
+  openaiWs.on('error', (err) => {
+    console.error(`[Realtime] WS error (${targetLang}):`, err.message);
+    translateSessions.delete(targetLang);
+  });
+}
+
+function closeSessionIfUnused(targetLang) {
+  let count = 0;
+  wsParticipants.forEach((p) => { if (p.lang === targetLang) count++; });
+  if (count === 0) {
+    const s = translateSessions.get(targetLang);
+    if (s) { s.ws.close(); translateSessions.delete(targetLang); console.log(`[Realtime] Closed idle: ${targetLang}`); }
+  }
+}
+
+wss.on('connection', (ws) => {
+  console.log('[WS] Client connected');
+
+  ws.on('message', (data, isBinary) => {
+    if (!isBinary) {
+      try {
+        const msg = JSON.parse(data.toString());
+
+        if (msg.type === 'join') {
+          const id = 'p_' + Math.random().toString(36).slice(2, 8);
+          wsParticipants.set(ws, { lang: msg.lang, role: msg.role || 'listener', id });
+          ws.send(JSON.stringify({ type: 'joined', id, active: meetingActive, startTime: meetingStartTime }));
+          openTranslateSession(msg.lang);
+          console.log(`[WS] Joined: ${msg.role} / ${msg.lang}`);
+        }
+        else if (msg.type === 'lang_change') {
+          const p = wsParticipants.get(ws);
+          if (p) {
+            const old = p.lang;
+            p.lang = msg.lang;
+            openTranslateSession(msg.lang);
+            setTimeout(() => closeSessionIfUnused(old), 15000);
+          }
+        }
+        else if (msg.type === 'meeting_end') {
+          meetingActive = false;
+          fetch; // REST endpoint also called from client separately
+          broadcastAll({ type: 'meeting_ended' });
+          console.log('[WS] Meeting ended by host');
+        }
+      } catch (e) {
+        console.error('[WS] JSON parse error:', e.message);
+      }
+    } else {
+      // Binary: raw PCM16 audio from a speaker
+      const speaker = wsParticipants.get(ws);
+      if (!speaker) return;
+
+      const audioB64 = Buffer.from(data).toString('base64');
+
+      // Route to every target language that has at least one OTHER participant
+      const targets = new Set();
+      wsParticipants.forEach((p, cws) => { if (cws !== ws) targets.add(p.lang); });
+
+      targets.forEach((lang) => {
+        if (!translateSessions.has(lang)) openTranslateSession(lang);
+        const s = translateSessions.get(lang);
+        if (!s || !s.active || s.ws.readyState !== WebSocket.OPEN) return;
+        s.ws.send(JSON.stringify({ type: 'input_audio_buffer.append', audio: audioB64 }));
+      });
+    }
+  });
+
+  ws.on('close', () => {
+    const p = wsParticipants.get(ws);
+    if (p) {
+      const lang = p.lang;
+      console.log(`[WS] Disconnected: ${p.role} / ${lang}`);
+      wsParticipants.delete(ws);
+      setTimeout(() => closeSessionIfUnused(lang), 15000);
+    }
+  });
+
+  ws.on('error', (err) => {
+    console.error('[WS] Client error:', err.message);
+    wsParticipants.delete(ws);
+  });
 });
 
 // ── Start ─────────────────────────────────────────────

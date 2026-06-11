@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-
-<html class="light" lang="en"><head>
+<html class="light" lang="en">
+<head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Active Meeting - MeetLingo</title>
@@ -8,232 +8,165 @@
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            "colors": {
-                "primary-fixed-dim": "#edbe88",
-                "on-tertiary": "#ffffff",
-                "surface-container-highest": "#e2e2e2",
-                "on-primary-container": "#fffbff",
-                "surface": "#f9f9f9",
-                "on-tertiary-container": "#fefcfc",
-                "surface-container": "#eeeeee",
-                "secondary": "#4d6700",
-                "inverse-surface": "#2f3131",
-                "on-secondary-container": "#506b00",
-                "primary-fixed": "#ffddb8",
-                "on-tertiary-fixed": "#1b1c1c",
-                "on-error": "#ffffff",
-                "secondary-container": "#c1f04e",
-                "inverse-on-surface": "#f1f1f1",
-                "on-secondary-fixed-variant": "#394d00",
-                "error-container": "#ffdad6",
-                "inverse-primary": "#edbe88",
-                "surface-container-low": "#f4f3f3",
-                "on-background": "#1a1c1c",
-                "background": "#f9f9f9",
-                "on-secondary-fixed": "#151f00",
-                "surface-bright": "#f9f9f9",
-                "secondary-fixed": "#c4f351",
-                "surface-variant": "#e2e2e2",
-                "on-secondary": "#ffffff",
-                "tertiary": "#5c5c5c",
-                "on-error-container": "#93000a",
-                "on-surface-variant": "#4f453a",
-                "secondary-fixed-dim": "#a8d635",
-                "surface-container-high": "#e8e8e8",
-                "surface-tint": "#7b582a",
-                "primary": "#785528",
-                "on-primary-fixed": "#2a1700",
-                "tertiary-fixed-dim": "#c8c6c6",
-                "on-surface": "#1a1c1c",
-                "on-primary-fixed-variant": "#604015",
-                "tertiary-fixed": "#e4e2e2",
-                "outline": "#817569",
-                "surface-container-lowest": "#ffffff",
-                "primary-container": "#936d3e",
-                "on-primary": "#ffffff",
-                "error": "#ba1a1a",
-                "outline-variant": "#d3c4b6",
-                "surface-dim": "#dadada",
-                "tertiary-container": "#757474",
-                "on-tertiary-fixed-variant": "#464747"
-            },
-            "borderRadius": {
-                "DEFAULT": "0.125rem",
-                "lg": "0.25rem",
-                "xl": "0.5rem",
-                "full": "0.75rem"
-            },
-            "spacing": {
-                "margin-mobile": "16px",
-                "xl": "80px",
-                "lg": "48px",
-                "xs": "4px",
-                "md": "24px",
-                "container-max": "1200px",
-                "base": "8px",
-                "sm": "12px",
-                "gutter": "24px"
-            },
-            "fontFamily": {
-                "headline-lg-mobile": ["Source Sans 3"],
-                "body-lg": ["Source Sans 3"],
-                "headline-xl": ["Source Sans 3"],
-                "body-md": ["Source Sans 3"],
-                "label-md": ["Source Sans 3"],
-                "headline-md": ["Source Sans 3"],
-                "headline-lg": ["Source Sans 3"],
-                "caption": ["Source Sans 3"]
-            },
-            "fontSize": {
-                "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
-                "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
-                "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
-                "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
-                "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
-                "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
-                "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
-                "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
-            }
-          },
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "primary-fixed-dim": "#edbe88",
+          "on-tertiary": "#ffffff",
+          "surface-container-highest": "#e2e2e2",
+          "on-primary-container": "#fffbff",
+          "surface": "#f9f9f9",
+          "on-tertiary-container": "#fefcfc",
+          "surface-container": "#eeeeee",
+          "secondary": "#4d6700",
+          "inverse-surface": "#2f3131",
+          "on-secondary-container": "#506b00",
+          "primary-fixed": "#ffddb8",
+          "on-tertiary-fixed": "#1b1c1c",
+          "on-error": "#ffffff",
+          "secondary-container": "#c1f04e",
+          "inverse-on-surface": "#f1f1f1",
+          "on-secondary-fixed-variant": "#394d00",
+          "error-container": "#ffdad6",
+          "inverse-primary": "#edbe88",
+          "surface-container-low": "#f4f3f3",
+          "on-background": "#1a1c1c",
+          "background": "#f9f9f9",
+          "on-secondary-fixed": "#151f00",
+          "surface-bright": "#f9f9f9",
+          "secondary-fixed": "#c4f351",
+          "surface-variant": "#e2e2e2",
+          "on-secondary": "#ffffff",
+          "tertiary": "#5c5c5c",
+          "on-error-container": "#93000a",
+          "on-surface-variant": "#4f453a",
+          "secondary-fixed-dim": "#a8d635",
+          "surface-container-high": "#e8e8e8",
+          "surface-tint": "#7b582a",
+          "primary": "#785528",
+          "on-primary-fixed": "#2a1700",
+          "tertiary-fixed-dim": "#c8c6c6",
+          "on-surface": "#1a1c1c",
+          "on-primary-fixed-variant": "#604015",
+          "tertiary-fixed": "#e4e2e2",
+          "outline": "#817569",
+          "surface-container-lowest": "#ffffff",
+          "primary-container": "#936d3e",
+          "on-primary": "#ffffff",
+          "error": "#ba1a1a",
+          "outline-variant": "#d3c4b6",
+          "surface-dim": "#dadada",
+          "tertiary-container": "#757474",
+          "on-tertiary-fixed-variant": "#464747"
         },
+        "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+        "spacing": { "margin-mobile": "16px", "xl": "80px", "lg": "48px", "xs": "4px", "md": "24px", "container-max": "1200px", "base": "8px", "sm": "12px", "gutter": "24px" },
+        "fontFamily": {
+          "headline-lg-mobile": ["Source Sans 3"], "body-lg": ["Source Sans 3"], "headline-xl": ["Source Sans 3"],
+          "body-md": ["Source Sans 3"], "label-md": ["Source Sans 3"], "headline-md": ["Source Sans 3"],
+          "headline-lg": ["Source Sans 3"], "caption": ["Source Sans 3"]
+        },
+        "fontSize": {
+          "headline-lg-mobile": ["28px", {"lineHeight":"36px","fontWeight":"600"}],
+          "body-lg":  ["18px", {"lineHeight":"28px","fontWeight":"400"}],
+          "headline-xl": ["48px", {"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],
+          "body-md":  ["16px", {"lineHeight":"24px","fontWeight":"400"}],
+          "label-md": ["14px", {"lineHeight":"20px","letterSpacing":"0.05em","fontWeight":"600"}],
+          "headline-md": ["24px", {"lineHeight":"32px","fontWeight":"600"}],
+          "headline-lg": ["32px", {"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"600"}],
+          "caption": ["12px", {"lineHeight":"16px","fontWeight":"400"}]
+        }
       }
-    </script>
+    }
+  }
+</script>
 <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .translation-glow {
-            box-shadow: 0 4px 20px -5px rgba(123, 88, 42, 0.1);
-        }
-        body {
-            min-height: max(884px, 100dvh);
-            font-family: 'Source Sans 3', sans-serif;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .translation-glow { box-shadow: 0 4px 20px -5px rgba(123,88,42,0.1); }
+  body { min-height: max(884px, 100dvh); font-family: 'Source Sans 3', sans-serif; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes mic-pulse-green { 0%{box-shadow:0 0 0 0 rgba(149,193,30,0.55)} 70%{box-shadow:0 0 0 18px rgba(149,193,30,0)} 100%{box-shadow:0 0 0 0 rgba(149,193,30,0)} }
+  .mic-live-pulse { animation: mic-pulse-green 1.1s infinite; }
+</style>
 </head>
 <body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col">
+
 <!-- Top Bar -->
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-[56px] bg-white border-b border-[#EEEEEE]">
-<div class="flex items-center w-full px-4 relative h-full">
-<!-- LEFT: Back arrow -->
-<div class="flex items-center">
-<span class="material-symbols-outlined text-[#555555] cursor-pointer" id="back-arrow">arrow_back</span>
-</div>
-<!-- CENTER: Logo block (klickbar → Leave-Popup) -->
-<div id="logo-link" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-baseline gap-[4px] cursor-pointer select-none" style="z-index:10;">
-<span class="text-[18px] font-bold text-[#95C11E] leading-none">MeetLingo</span>
-<span class="text-[11px] font-normal text-[#A77F4E] leading-none">by ZIMM</span>
-</div>
-<!-- RIGHT: Timer -->
-<div class="ml-auto flex items-center">
-<div class="bg-[#EEEEEE] text-[#555555] px-3 py-1 rounded-full text-[14px] font-medium leading-none" id="meeting-timer">
-      24:59
+  <div class="flex items-center w-full px-4 relative h-full">
+    <div class="flex items-center">
+      <span class="material-symbols-outlined text-[#555555] cursor-pointer" id="back-arrow">arrow_back</span>
     </div>
-</div>
-</div>
-</header>
-<!-- Main Content Canvas -->
-<main class="flex-grow pt-[72px] pb-[120px] px-6 flex flex-col gap-6 max-w-4xl mx-auto w-full">
-<!-- Collapsible Agenda Card -->
-<section class="w-full">
-<div class="bg-surface-container-lowest rounded-xl p-6 border border-surface-container shadow-sm">
-<div class="flex justify-between items-center mb-3">
-<span class="text-label-md text-primary uppercase tracking-wider font-bold">Today's Agenda</span>
-<span class="material-symbols-outlined text-on-surface-variant cursor-pointer" id="agenda-toggle">expand_more</span>
-</div>
-<div class="space-y-1" id="agenda-display">
-<p class="text-caption text-on-surface-variant italic">No agenda set — host can add it in the host view.</p>
-</div>
-</div>
-</section>
-<!-- Live Translation Display -->
-<section class="flex-grow flex flex-col">
-  <div class="w-full bg-white rounded-xl translation-glow border border-surface-container-high flex flex-col" style="height: calc(100dvh - 310px); min-height: 280px;">
-
-    <!-- Conversation History — fixed-height scrollbox -->
-    <div id="conversation-history" style="
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 16px;
-      scroll-behavior: smooth;
-      overscroll-behavior: contain;
-      -webkit-overflow-scrolling: touch;
-    ">
-      <p id="empty-state" style="
-        color: #555555;
-        font-style: italic;
-        text-align: center;
-        margin: auto;
-        font-size: 16px;
-      ">Waiting for speaker...</p>
+    <div id="logo-link" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-baseline gap-[4px] cursor-pointer select-none" style="z-index:10;">
+      <span class="text-[18px] font-bold text-[#95C11E] leading-none">MeetLingo</span>
+      <span class="text-[11px] font-normal text-[#A77F4E] leading-none">by ZIMM</span>
     </div>
-
+    <div class="ml-auto flex items-center">
+      <div class="bg-[#EEEEEE] text-[#555555] px-3 py-1 rounded-full text-[14px] font-medium leading-none" id="meeting-timer">00:00</div>
+    </div>
   </div>
-</section>
+</header>
 
-<!-- No-signal indicator — shown after 30s of silence -->
-<div id="no-signal-bar" style="
-  display: none;
-  position: fixed;
-  top: 68px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #555;
-  color: white;
-  border-radius: 999px;
-  padding: 7px 18px;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: 'Source Sans 3', sans-serif;
-  align-items: center;
-  gap: 6px;
-  z-index: 100;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  white-space: nowrap;
-">
+<!-- Main Content -->
+<main class="flex-grow pt-[72px] pb-[148px] px-6 flex flex-col gap-5 max-w-4xl mx-auto w-full">
+
+  <!-- Agenda Card -->
+  <section class="w-full">
+    <div class="bg-surface-container-lowest rounded-xl p-6 border border-surface-container shadow-sm">
+      <div class="flex justify-between items-center mb-3">
+        <span class="text-label-md text-primary uppercase tracking-wider font-bold" id="agenda-title">Today's Agenda</span>
+        <span class="material-symbols-outlined text-on-surface-variant cursor-pointer" id="agenda-toggle">expand_more</span>
+      </div>
+      <div class="space-y-1" id="agenda-display">
+        <p class="text-caption text-on-surface-variant italic">No agenda set.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Conversation History -->
+  <section class="flex-grow flex flex-col">
+    <div class="w-full bg-white rounded-xl translation-glow border border-surface-container-high flex flex-col" style="height:calc(100dvh - 340px); min-height:220px;">
+      <div id="conversation-history" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:16px;scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;">
+        <p id="empty-state" style="color:#555555;font-style:italic;text-align:center;margin:auto;font-size:16px;">Waiting for speaker...</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- No-signal indicator -->
+<div id="no-signal-bar" style="display:none;position:fixed;top:68px;left:50%;transform:translateX(-50%);background:#555;color:white;border-radius:999px;padding:7px 18px;font-size:13px;font-weight:600;font-family:'Source Sans 3',sans-serif;align-items:center;gap:6px;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.2);white-space:nowrap;">
   <span style="font-size:15px;">🔇</span> Waiting for presenter…
 </div>
 
-<!-- New messages badge — fixed above bottom nav -->
-<button id="unread-badge" style="
-  display: none;
-  position: fixed;
-  bottom: 92px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #A77F4E;
-  color: white;
-  border: none;
-  border-radius: 999px;
-  padding: 9px 20px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-  white-space: nowrap;
-  z-index: 100;
-  font-family: 'Source Sans 3', sans-serif;
-">↓ Neue Nachrichten</button>
-</main>
-<!-- Language Picker Popup — max 50vh, scrollbar für erweiterte Sprachen -->
-<div id="lang-picker-popup" style="display:none; position:fixed; bottom:82px; left:0; right:0; z-index:55; padding:0 12px 6px;">
-  <div style="background:white; border-radius:16px; border:1px solid #EEEEEE; box-shadow:0 -8px 32px rgba(0,0,0,0.15); display:flex; flex-direction:column; max-height:50vh; overflow:hidden;">
-    <!-- Fester Header -->
-    <div id="lang-picker-title" style="padding:11px 16px; border-bottom:1px solid #F0F0F0; font-size:11px; color:#555; text-transform:uppercase; letter-spacing:0.08em; font-weight:700; flex-shrink:0; background:white;">Select Language</div>
-    <!-- Scrollbarer Bereich -->
-    <div style="overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch;">
-      <!-- Top 8 Hauptsprachen -->
+<!-- Unread badge -->
+<button id="unread-badge" style="display:none;position:fixed;bottom:158px;left:50%;transform:translateX(-50%);background:#A77F4E;color:white;border:none;border-radius:999px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.25);white-space:nowrap;z-index:100;font-family:'Source Sans 3',sans-serif;">↓ Neue Nachrichten</button>
+
+<!-- Mic FAB (floating action button, above bottom nav) -->
+<div style="position:fixed;bottom:92px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:6px;z-index:60;pointer-events:none;">
+  <button id="mic-btn" style="pointer-events:all;width:68px;height:68px;border-radius:50%;border:none;background:#FF4444;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(255,68,68,0.4);transition:background 0.2s,box-shadow 0.2s;">
+    <span id="mic-icon" class="material-symbols-outlined" style="color:white;font-size:32px;font-variation-settings:'FILL' 1;">mic_off</span>
+  </button>
+  <div id="mic-status" style="pointer-events:none;font-size:11px;color:#555;font-weight:700;font-family:'Source Sans 3',sans-serif;background:rgba(255,255,255,0.92);border-radius:999px;padding:3px 12px;box-shadow:0 1px 6px rgba(0,0,0,0.1);" id="mic-status-label">Muted</div>
+</div>
+
+<!-- Volume Popup -->
+<div id="volume-popup" style="display:none;" class="fixed bottom-[88px] left-1/2 -translate-x-1/2 bg-white border border-surface-container rounded-xl p-4 shadow-lg z-[70] w-52">
+  <div class="flex items-center gap-2">
+    <span class="material-symbols-outlined text-[#555555] text-lg">volume_down</span>
+    <input type="range" min="0" max="100" value="50" id="vol-slider-popup" class="flex-1 h-1.5 accent-[#95C11E] cursor-pointer">
+    <span class="material-symbols-outlined text-[#555555] text-lg">volume_up</span>
+  </div>
+  <div class="text-center mt-2 text-sm font-medium text-[#555555]" id="vol-popup-display">50%</div>
+</div>
+
+<!-- Language Picker Popup -->
+<div id="lang-picker-popup" style="display:none;position:fixed;bottom:82px;left:0;right:0;z-index:65;padding:0 12px 6px;">
+  <div style="background:white;border-radius:16px;border:1px solid #EEEEEE;box-shadow:0 -8px 32px rgba(0,0,0,0.15);display:flex;flex-direction:column;max-height:50vh;overflow:hidden;">
+    <div id="lang-picker-title" style="padding:11px 16px;border-bottom:1px solid #F0F0F0;font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;flex-shrink:0;background:white;">Select Language</div>
+    <div style="overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;">
       <button class="lang-pick-row" data-lang="English"    style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #F5F5F5;cursor:pointer;background:transparent;text-align:left;"><span style="font-size:20px;">🇬🇧</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:#1A1A1A;">English</div><div style="font-size:11px;color:#888;">English</div></div><span class="lang-check" style="color:#95C11E;font-size:16px;font-weight:700;opacity:0;">✓</span></button>
       <button class="lang-pick-row" data-lang="German"     style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #F5F5F5;cursor:pointer;background:transparent;text-align:left;"><span style="font-size:20px;">🇩🇪</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:#1A1A1A;">German</div><div style="font-size:11px;color:#888;">Deutsch</div></div><span class="lang-check" style="color:#95C11E;font-size:16px;font-weight:700;opacity:0;">✓</span></button>
       <button class="lang-pick-row" data-lang="Spanish"    style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #F5F5F5;cursor:pointer;background:transparent;text-align:left;"><span style="font-size:20px;">🇪🇸</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:#1A1A1A;">Spanish</div><div style="font-size:11px;color:#888;">Español</div></div><span class="lang-check" style="color:#95C11E;font-size:16px;font-weight:700;opacity:0;">✓</span></button>
@@ -242,8 +175,7 @@
       <button class="lang-pick-row" data-lang="Japanese"   style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #F5F5F5;cursor:pointer;background:transparent;text-align:left;"><span style="font-size:20px;">🇯🇵</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:#1A1A1A;">Japanese</div><div style="font-size:11px;color:#888;">日本語</div></div><span class="lang-check" style="color:#95C11E;font-size:16px;font-weight:700;opacity:0;">✓</span></button>
       <button class="lang-pick-row" data-lang="Portuguese" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #F5F5F5;cursor:pointer;background:transparent;text-align:left;"><span style="font-size:20px;">🇵🇹</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:#1A1A1A;">Portuguese</div><div style="font-size:11px;color:#888;">Português</div></div><span class="lang-check" style="color:#95C11E;font-size:16px;font-weight:700;opacity:0;">✓</span></button>
       <button class="lang-pick-row" data-lang="Turkish"    style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #F5F5F5;cursor:pointer;background:transparent;text-align:left;"><span style="font-size:20px;">🇹🇷</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:#1A1A1A;">Turkish</div><div style="font-size:11px;color:#888;">Türkçe</div></div><span class="lang-check" style="color:#95C11E;font-size:16px;font-weight:700;opacity:0;">✓</span></button>
-      <!-- Trennlinie: weitere Sprachen (scrollbar) -->
-      <div style="padding:7px 16px; background:#F5F5F5; font-size:10px; color:#999; text-transform:uppercase; letter-spacing:0.07em; font-weight:700; border-top:1px solid #EEEEEE;">More languages</div>
+      <div style="padding:7px 16px;background:#F5F5F5;font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.07em;font-weight:700;border-top:1px solid #EEEEEE;">More languages</div>
       <button class="lang-pick-row" data-lang="Dutch"      style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #F5F5F5;cursor:pointer;background:transparent;text-align:left;"><span style="font-size:20px;">🇳🇱</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:#1A1A1A;">Dutch</div><div style="font-size:11px;color:#888;">Nederlands</div></div><span class="lang-check" style="color:#95C11E;font-size:16px;font-weight:700;opacity:0;">✓</span></button>
       <button class="lang-pick-row" data-lang="Korean"     style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #F5F5F5;cursor:pointer;background:transparent;text-align:left;"><span style="font-size:20px;">🇰🇷</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:#1A1A1A;">Korean</div><div style="font-size:11px;color:#888;">한국어</div></div><span class="lang-check" style="color:#95C11E;font-size:16px;font-weight:700;opacity:0;">✓</span></button>
       <button class="lang-pick-row" data-lang="Chinese"    style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #F5F5F5;cursor:pointer;background:transparent;text-align:left;"><span style="font-size:20px;">🇨🇳</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:#1A1A1A;">Chinese</div><div style="font-size:11px;color:#888;">中文</div></div><span class="lang-check" style="color:#95C11E;font-size:16px;font-weight:700;opacity:0;">✓</span></button>
@@ -259,474 +191,430 @@
 </div>
 
 <!-- Leave Confirmation Modal -->
-<div id="leave-confirm-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; align-items:center; justify-content:center; padding:20px;">
-  <div style="background:white; border-radius:20px; padding:28px 24px; max-width:320px; width:100%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+<div id="leave-confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:white;border-radius:20px;padding:28px 24px;max-width:320px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
     <div style="width:56px;height:56px;background:#FEE2E2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
       <span class="material-symbols-outlined" style="color:#991B1B;font-size:28px;">logout</span>
     </div>
     <p id="leave-confirm-text" style="font-size:17px;font-weight:700;color:#1A1A1A;margin-bottom:6px;"></p>
-    <p style="font-size:13px;color:#777;margin-bottom:24px;" id="leave-confirm-sub"></p>
+    <p id="leave-confirm-sub"  style="font-size:13px;color:#777;margin-bottom:24px;"></p>
     <div style="display:flex;gap:12px;">
       <button id="leave-cancel-btn" style="flex:1;padding:14px;border-radius:12px;border:2px solid #EEEEEE;font-weight:600;font-size:15px;color:#555;background:white;cursor:pointer;"></button>
-      <button id="leave-ok-btn" style="flex:1;padding:14px;border-radius:12px;font-weight:700;font-size:15px;color:white;background:#FF4444;cursor:pointer;"></button>
+      <button id="leave-ok-btn"     style="flex:1;padding:14px;border-radius:12px;font-weight:700;font-size:15px;color:white;background:#FF4444;cursor:pointer;"></button>
     </div>
   </div>
 </div>
 
-<!-- Bottom Navigation -->
-<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-center items-center gap-3 px-4 h-20 bg-surface-container-lowest border-t border-surface-container">
-<div class="flex-1 h-full flex items-center justify-center px-1">
-<button id="lang-btn" class="flex flex-col items-center justify-center bg-[#95C11E] text-white w-full py-3 rounded-xl shadow-sm">
-<span class="material-symbols-outlined text-2xl mb-1">translate</span>
-<span class="text-[10px] font-bold uppercase tracking-wider" id="nav-lang-label">Language</span>
-</button>
-</div>
-<div class="flex-1 h-full flex items-center justify-center px-1">
-<button class="flex flex-col items-center justify-center bg-[#FEE2E2] text-[#991B1B] w-full py-3 rounded-xl hover:bg-[#FCA5A5] transition-colors" id="leave-btn">
-<span class="material-symbols-outlined text-2xl mb-1">logout</span>
-<span class="text-[10px] font-bold uppercase tracking-wider" id="nav-leave-label">Leave</span>
-</button>
-</div>
+<!-- Bottom Navigation: Volume | Language | Leave -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-between items-center px-2 h-20 bg-surface-container-lowest border-t border-surface-container">
+  <button id="volume-btn" class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors w-1/3 h-full">
+    <span class="material-symbols-outlined text-2xl mb-1">volume_up</span>
+    <span class="text-[10px] font-bold uppercase tracking-wider" id="nav-volume-label">Volume</span>
+  </button>
+  <div class="w-1/3 h-full flex items-center justify-center px-1">
+    <button id="lang-btn" class="flex flex-col items-center justify-center bg-[#95C11E] text-white w-full py-3 rounded-xl shadow-sm">
+      <span class="material-symbols-outlined text-2xl mb-1">translate</span>
+      <span class="text-[10px] font-bold uppercase tracking-wider" id="nav-lang-label">Language</span>
+    </button>
+  </div>
+  <div class="w-1/3 h-full flex items-center justify-center px-1">
+    <button id="leave-btn" class="flex flex-col items-center justify-center bg-[#FEE2E2] text-[#991B1B] w-full py-3 rounded-xl hover:bg-[#FCA5A5] transition-colors">
+      <span class="material-symbols-outlined text-2xl mb-1">logout</span>
+      <span class="text-[10px] font-bold uppercase tracking-wider" id="nav-leave-label">Leave</span>
+    </button>
+  </div>
 </nav>
 
+<!-- Background accents -->
+<div class="fixed top-0 right-0 pointer-events-none opacity-10"><div class="w-64 h-64 bg-primary-fixed blur-[100px] rounded-full"></div></div>
+<div class="fixed bottom-0 left-0 pointer-events-none opacity-10"><div class="w-80 h-80 bg-secondary-fixed-dim blur-[120px] rounded-full"></div></div>
+
+<script src="/js/realtime.js"></script>
 <script>
-    // ── UI Translations ───────────────────────────
-    var UI = {
-      Spanish:    { waiting:'Esperando al orador...', translating:'Traduciendo...', mute:'Silencio', volume:'Volumen', language:'Idioma', leave:'Salir', agenda:'Agenda de hoy', picker:'Seleccionar idioma', confirm_leave:'¿Quieres salir de la reunión?', confirm_sub:'La traducción se detendrá.', yes:'Salir', no:'Cancelar' },
-      French:     { waiting:"En attente de l'orateur...", translating:'Traduction...', mute:'Muet', volume:'Volume', language:'Langue', leave:'Quitter', agenda:"Agenda d'aujourd'hui", picker:'Choisir une langue', confirm_leave:'Quitter la réunion?', confirm_sub:'La traduction sera arrêtée.', yes:'Quitter', no:'Annuler' },
-      German:     { waiting:'Warte auf Sprecher...', translating:'Übersetzt...', mute:'Stumm', volume:'Lautstärke', language:'Sprache', leave:'Verlassen', agenda:'Heutige Agenda', picker:'Sprache wählen', confirm_leave:'Meeting verlassen?', confirm_sub:'Die Übersetzung wird gestoppt.', yes:'Verlassen', no:'Abbrechen' },
-      Italian:    { waiting:'In attesa del relatore...', translating:'Traduzione...', mute:'Silenzia', volume:'Volume', language:'Lingua', leave:'Esci', agenda:'Agenda di oggi', picker:'Seleziona lingua', confirm_leave:'Vuoi uscire dalla riunione?', confirm_sub:'La traduzione verrà interrotta.', yes:'Esci', no:'Annulla' },
-      Japanese:   { waiting:'スピーカーを待っています...', translating:'翻訳中...', mute:'ミュート', volume:'音量', language:'言語', leave:'退出', agenda:'本日の議題', picker:'言語を選択', confirm_leave:'会議から退出しますか？', confirm_sub:'翻訳が停止します。', yes:'退出', no:'キャンセル' },
-      English:    { waiting:'Waiting for speaker...', translating:'Translating...', mute:'Mute', volume:'Volume', language:'Language', leave:'Leave', agenda:"Today's Agenda", picker:'Select language', confirm_leave:'Leave the meeting?', confirm_sub:'Translation will stop.', yes:'Leave', no:'Cancel' },
-      Portuguese: { waiting:'Aguardando o orador...', translating:'Traduzindo...', mute:'Mudo', volume:'Volume', language:'Idioma', leave:'Sair', agenda:'Agenda de hoje', picker:'Selecionar idioma', confirm_leave:'Sair da reunião?', confirm_sub:'A tradução será interrompida.', yes:'Sair', no:'Cancelar' },
-      Turkish:    { waiting:'Konuşmacı bekleniyor...', translating:'Çeviriyor...', mute:'Sessiz', volume:'Ses', language:'Dil', leave:'Ayrıl', agenda:'Bugünkü Gündem', picker:'Dil seç', confirm_leave:'Toplantıdan ayrılmak istiyor musunuz?', confirm_sub:'Çeviri durduruluyor.', yes:'Ayrıl', no:'İptal' },
-      Dutch:      { waiting:'Wachten op spreker...', translating:'Vertalen...', mute:'Demp', volume:'Volume', language:'Taal', leave:'Verlaten', agenda:'Agenda van vandaag', picker:'Selecteer taal', confirm_leave:'Vergadering verlaten?', confirm_sub:'Vertaling wordt gestopt.', yes:'Verlaten', no:'Annuleren' },
-      Korean:     { waiting:'발표자를 기다리는 중...', translating:'번역 중...', mute:'음소거', volume:'볼륨', language:'언어', leave:'나가기', agenda:'오늘의 안건', picker:'언어 선택', confirm_leave:'회의를 나가시겠습니까?', confirm_sub:'번역이 중지됩니다.', yes:'나가기', no:'취소' },
-      Chinese:    { waiting:'等待发言者...', translating:'翻译中...', mute:'静音', volume:'音量', language:'语言', leave:'离开', agenda:'今日议程', picker:'选择语言', confirm_leave:'确定离开会议吗？', confirm_sub:'翻译将停止。', yes:'离开', no:'取消' },
-      Arabic:     { waiting:'في انتظار المتحدث...', translating:'جارٍ الترجمة...', mute:'كتم الصوت', volume:'الصوت', language:'اللغة', leave:'مغادرة', agenda:'أجندة اليوم', picker:'اختر اللغة', confirm_leave:'هل تريد مغادرة الاجتماع؟', confirm_sub:'سيتوقف الترجمة.', yes:'مغادرة', no:'إلغاء' },
-      Russian:    { waiting:'Ожидание докладчика...', translating:'Переводим...', mute:'Звук выкл.', volume:'Громкость', language:'Язык', leave:'Выйти', agenda:'Повестка дня', picker:'Выбрать язык', confirm_leave:'Покинуть встречу?', confirm_sub:'Перевод будет остановлен.', yes:'Выйти', no:'Отмена' },
-      Polish:     { waiting:'Oczekiwanie na mówcę...', translating:'Tłumaczenie...', mute:'Wycisz', volume:'Głośność', language:'Język', leave:'Wyjdź', agenda:'Agenda na dziś', picker:'Wybierz język', confirm_leave:'Opuścić spotkanie?', confirm_sub:'Tłumaczenie zostanie zatrzymane.', yes:'Wyjdź', no:'Anuluj' },
-      Swedish:    { waiting:'Väntar på talaren...', translating:'Översätter...', mute:'Ljud av', volume:'Volym', language:'Språk', leave:'Lämna', agenda:'Dagens agenda', picker:'Välj språk', confirm_leave:'Lämna mötet?', confirm_sub:'Översättningen avslutas.', yes:'Lämna', no:'Avbryt' },
-      Hindi:      { waiting:'वक्ता की प्रतीक्षा में...', translating:'अनुवाद हो रहा है...', mute:'म्यूट', volume:'वॉल्यूम', language:'भाषा', leave:'छोड़ें', agenda:'आज की एजेंडा', picker:'भाषा चुनें', confirm_leave:'बैठक छोड़ें?', confirm_sub:'अनुवाद रुक जाएगा।', yes:'छोड़ें', no:'रद्द करें' },
-      Greek:      { waiting:'Αναμονή ομιλητή...', translating:'Μετάφραση...', mute:'Σίγαση', volume:'Ένταση', language:'Γλώσσα', leave:'Αποχώρηση', agenda:'Ημερήσια διάταξη', picker:'Επιλογή γλώσσας', confirm_leave:'Αποχώρηση από τη σύσκεψη;', confirm_sub:'Η μετάφραση θα σταματήσει.', yes:'Αποχώρηση', no:'Ακύρωση' },
-      Ukrainian:  { waiting:'Очікування доповідача...', translating:'Переклад...', mute:'Вимкнути звук', volume:'Гучність', language:'Мова', leave:'Вийти', agenda:'Порядок денний', picker:'Вибрати мову', confirm_leave:'Покинути зустріч?', confirm_sub:'Переклад буде зупинений.', yes:'Вийти', no:'Скасувати' },
-    };
+// ── UI Translations ──────────────────────────────────
+var UI = {
+  English:    { waiting:'Waiting for speaker...', muted:'Muted', live:'Live', volume:'Volume', language:'Language', leave:'Leave', agenda:"Today's Agenda", picker:'Select language', confirm_leave:'Leave the meeting?', confirm_sub:'Translation will stop.', yes:'Leave', no:'Cancel' },
+  German:     { waiting:'Warte auf Sprecher...', muted:'Stumm', live:'Live', volume:'Lautstärke', language:'Sprache', leave:'Verlassen', agenda:'Heutige Agenda', picker:'Sprache wählen', confirm_leave:'Meeting verlassen?', confirm_sub:'Die Übersetzung wird gestoppt.', yes:'Verlassen', no:'Abbrechen' },
+  Spanish:    { waiting:'Esperando al orador...', muted:'Silencio', live:'En vivo', volume:'Volumen', language:'Idioma', leave:'Salir', agenda:'Agenda de hoy', picker:'Seleccionar idioma', confirm_leave:'¿Salir de la reunión?', confirm_sub:'La traducción se detendrá.', yes:'Salir', no:'Cancelar' },
+  French:     { waiting:"En attente de l'orateur...", muted:'Muet', live:'En direct', volume:'Volume', language:'Langue', leave:'Quitter', agenda:"Agenda d'aujourd'hui", picker:'Choisir une langue', confirm_leave:'Quitter la réunion?', confirm_sub:'La traduction sera arrêtée.', yes:'Quitter', no:'Annuler' },
+  Italian:    { waiting:'In attesa del relatore...', muted:'Silenziato', live:'Dal vivo', volume:'Volume', language:'Lingua', leave:'Esci', agenda:'Agenda di oggi', picker:'Seleziona lingua', confirm_leave:'Uscire dalla riunione?', confirm_sub:'La traduzione verrà interrotta.', yes:'Esci', no:'Annulla' },
+  Japanese:   { waiting:'スピーカーを待っています...', muted:'ミュート', live:'ライブ', volume:'音量', language:'言語', leave:'退出', agenda:'本日の議題', picker:'言語を選択', confirm_leave:'会議から退出しますか？', confirm_sub:'翻訳が停止します。', yes:'退出', no:'キャンセル' },
+  Portuguese: { waiting:'Aguardando o orador...', muted:'Mudo', live:'Ao vivo', volume:'Volume', language:'Idioma', leave:'Sair', agenda:'Agenda de hoje', picker:'Selecionar idioma', confirm_leave:'Sair da reunião?', confirm_sub:'A tradução será interrompida.', yes:'Sair', no:'Cancelar' },
+  Turkish:    { waiting:'Konuşmacı bekleniyor...', muted:'Sessiz', live:'Canlı', volume:'Ses', language:'Dil', leave:'Ayrıl', agenda:'Bugünkü Gündem', picker:'Dil seç', confirm_leave:'Toplantıdan ayrılmak istiyor musunuz?', confirm_sub:'Çeviri durduruluyor.', yes:'Ayrıl', no:'İptal' },
+  Dutch:      { waiting:'Wachten op spreker...', muted:'Gedempt', live:'Live', volume:'Volume', language:'Taal', leave:'Verlaten', agenda:'Agenda van vandaag', picker:'Selecteer taal', confirm_leave:'Vergadering verlaten?', confirm_sub:'Vertaling wordt gestopt.', yes:'Verlaten', no:'Annuleren' },
+  Korean:     { waiting:'발표자를 기다리는 중...', muted:'음소거', live:'라이브', volume:'볼륨', language:'언어', leave:'나가기', agenda:'오늘의 안건', picker:'언어 선택', confirm_leave:'회의를 나가시겠습니까?', confirm_sub:'번역이 중지됩니다.', yes:'나가기', no:'취소' },
+  Chinese:    { waiting:'等待发言者...', muted:'静音', live:'直播', volume:'音量', language:'语言', leave:'离开', agenda:'今日议程', picker:'选择语言', confirm_leave:'确定离开会议吗？', confirm_sub:'翻译将停止。', yes:'离开', no:'取消' },
+  Arabic:     { waiting:'في انتظار المتحدث...', muted:'كتم', live:'مباشر', volume:'الصوت', language:'اللغة', leave:'مغادرة', agenda:'أجندة اليوم', picker:'اختر اللغة', confirm_leave:'هل تريد مغادرة الاجتماع؟', confirm_sub:'سيتوقف الترجمة.', yes:'مغادرة', no:'إلغاء' },
+  Russian:    { waiting:'Ожидание докладчика...', muted:'Выкл.', live:'В эфире', volume:'Громкость', language:'Язык', leave:'Выйти', agenda:'Повестка дня', picker:'Выбрать язык', confirm_leave:'Покинуть встречу?', confirm_sub:'Перевод будет остановлен.', yes:'Выйти', no:'Отмена' },
+  Polish:     { waiting:'Oczekiwanie na mówcę...', muted:'Wyciszony', live:'Na żywo', volume:'Głośność', language:'Język', leave:'Wyjdź', agenda:'Agenda na dziś', picker:'Wybierz język', confirm_leave:'Opuścić spotkanie?', confirm_sub:'Tłumaczenie zostanie zatrzymane.', yes:'Wyjdź', no:'Anuluj' },
+  Swedish:    { waiting:'Väntar på talaren...', muted:'Tyst', live:'Live', volume:'Volym', language:'Språk', leave:'Lämna', agenda:'Dagens agenda', picker:'Välj språk', confirm_leave:'Lämna mötet?', confirm_sub:'Översättningen avslutas.', yes:'Lämna', no:'Avbryt' },
+  Hindi:      { waiting:'वक्ता की प्रतीक्षा में...', muted:'म्यूट', live:'लाइव', volume:'वॉल्यूम', language:'भाषा', leave:'छोड़ें', agenda:'आज की एजेंडा', picker:'भाषा चुनें', confirm_leave:'बैठक छोड़ें?', confirm_sub:'अनुवाद रुक जाएगा।', yes:'छोड़ें', no:'रद्द करें' },
+  Greek:      { waiting:'Αναμονή ομιλητή...', muted:'Σίγαση', live:'Ζωντανά', volume:'Ένταση', language:'Γλώσσα', leave:'Αποχώρηση', agenda:'Ημερήσια διάταξη', picker:'Επιλογή γλώσσας', confirm_leave:'Αποχώρηση από τη σύσκεψη;', confirm_sub:'Η μετάφραση θα σταματήσει.', yes:'Αποχώρηση', no:'Ακύρωση' },
+  Ukrainian:  { waiting:'Очікування доповідача...', muted:'Вимкнено', live:'Наживо', volume:'Гучність', language:'Мова', leave:'Вийти', agenda:'Порядок денний', picker:'Вибрати мову', confirm_leave:'Покинути зустріч?', confirm_sub:'Переклад буде зупинений.', yes:'Вийти', no:'Скасувати' },
+};
 
-    function getLang() { return localStorage.getItem('meetlingo_lang') || 'Spanish'; }
-    function getT()    { return UI[getLang()] || UI['English']; }
+function getLang() { return localStorage.getItem('meetlingo_lang') || 'English'; }
+function getT()    { return UI[getLang()] || UI['English']; }
 
-    function applyUILanguage() {
-        var t = getT();
-        var lang = getLang();
-        // Nav labels
-        var ml = document.getElementById('nav-mute-label');    if (ml) ml.textContent = t.mute;
-        var ll = document.getElementById('nav-lang-label');    if (ll) ll.textContent = t.language;
-        var lv = document.getElementById('nav-leave-label');   if (lv) lv.textContent = t.leave;
-        // Empty state
-        var es = document.getElementById('empty-state');
-        if (es && es.parentNode) es.textContent = t.waiting;
-        // Translating indicator text
-        var ti = document.querySelector('#translating-indicator span.text-label-md');
-        if (ti) ti.textContent = t.translating + '...';
-        // Live translation bar label
-        var lbl = document.querySelector('#live-translation-bar p:first-child');
-        if (lbl) lbl.textContent = t.translating + '...';
-        // Agenda title
-        var agTitle = document.querySelector('.text-label-md.text-primary');
-        if (agTitle) agTitle.textContent = t.agenda.toUpperCase();
-        // Language picker title
-        var pickerTitle = document.getElementById('lang-picker-title');
-        if (pickerTitle) pickerTitle.textContent = t.picker;
-        // Mark current selection in picker
-        document.querySelectorAll('.lang-pick-row').forEach(function(btn) {
-            var check = btn.querySelector('.lang-check');
-            if (check) check.style.opacity = (btn.dataset.lang === lang) ? '1' : '0';
-            btn.style.background = (btn.dataset.lang === lang) ? '#F9FFE8' : 'transparent';
-        });
-        // Translate agenda into the new language
-        translateAgenda(lang);
-    }
-
-    // ── Agenda translation cache ──────────────────
-    var agendaCache = {};
-
-    function displayAgendaText(text) {
-        var el = document.getElementById('agenda-display');
-        if (!el) return;
-        var lines = text.trim().split('\n');
-        el.innerHTML = lines.map(function(line) {
-            return line.trim() ? '<p class="text-body-md text-on-surface">' + line.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>' : '';
-        }).join('');
-    }
-
-    var serverAgendaText = ''; // agenda text fetched from server (works cross-device)
-
-    async function translateAgenda(lang) {
-        // Use server-fetched text first, fall back to localStorage (host device only)
-        var original = serverAgendaText || localStorage.getItem('meetlingo_agenda');
-        if (!original || !original.trim()) return;
-        if (!lang) { displayAgendaText(original); return; }
-        // Use cache if available
-        if (agendaCache[lang]) { displayAgendaText(agendaCache[lang]); return; }
-        try {
-            var resp = await fetch('/api/translate-text', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: original, targetLanguage: lang })
-            });
-            var data = await resp.json();
-            if (data.success && data.translation) {
-                agendaCache[lang] = data.translation;
-                displayAgendaText(data.translation);
-            }
-        } catch(e) {
-            console.warn('[Agenda] Translation failed:', e);
-        }
-    }
-
-    // ── Load agenda from server (polls until populated) ──
-    (function() {
-        var el = document.getElementById('agenda-display');
-        if (!el) return;
-        var agendaPollTimer = null;
-
-        function fetchAgenda() {
-            fetch('/api/agenda')
-                .then(function(r) { return r.json(); })
-                .then(function(d) {
-                    if (d.agenda && d.agenda.trim()) {
-                        // Only re-translate if text changed
-                        if (d.agenda !== serverAgendaText) {
-                            serverAgendaText = d.agenda;
-                            agendaCache = {}; // clear stale cache when agenda changes
-                            var lang = localStorage.getItem('meetlingo_lang') || 'English';
-                            translateAgenda(lang);
-                        }
-                    }
-                })
-                .catch(function(e) { console.warn('[Agenda] Load failed:', e); });
-        }
-
-        fetchAgenda(); // immediate first fetch
-        agendaPollTimer = setInterval(fetchAgenda, 5000); // re-poll every 5s
-
-        // Stop polling once meeting ends (avoids unnecessary requests)
-        window.stopAgendaPolling = function() {
-            if (agendaPollTimer) { clearInterval(agendaPollTimer); agendaPollTimer = null; }
-        };
-    })();
-
-    // ── Agenda Toggle ─────────────────────────────
-    (function() {
-        var agendaDisplay = document.getElementById('agenda-display');
-        var toggleIcon    = document.getElementById('agenda-toggle');
-        if (!toggleIcon || !agendaDisplay) return;
-        var collapsed = false;
-        toggleIcon.addEventListener('click', function() {
-            collapsed = !collapsed;
-            agendaDisplay.style.display = collapsed ? 'none' : '';
-            toggleIcon.textContent = collapsed ? 'expand_less' : 'expand_more';
-        });
-    })();
-
-    // ── Timer + Host-End Detection ────────────────
-    (function() {
-        var hostEndedShown = false;
-        setInterval(function() {
-            // Timer — use server start time (set by DOMContentLoaded fetch), fallback to localStorage
-            var el = document.getElementById('meeting-timer');
-            if (el) {
-                var startTs = window.meetingStartTs
-                  || parseInt(localStorage.getItem('meetlingo_meeting_start') || Date.now());
-                var elapsed = Math.floor((Date.now() - startTs) / 1000);
-                if (elapsed < 0) elapsed = 0;
-                el.textContent = String(Math.floor(elapsed/60)).padStart(2,'0') + ':' + String(elapsed%60).padStart(2,'0');
-            }
-            // Host ended? — check via server (localStorage-only check doesn't work across devices)
-            if (!hostEndedShown) {
-                fetch('/api/meeting-status')
-                  .then(function(r) { return r.json(); })
-                  .then(function(d) {
-                    if (!d.active && !hostEndedShown) {
-                      hostEndedShown = true;
-                      showHostEndedOverlay();
-                    }
-                  }).catch(function(){});
-            }
-        }, 1000);
-    })();
-
-    var HOST_END_T = {
-      English:    { title:'Meeting ended',           sub:'The host has ended the meeting.',              btn:'Rate your experience' },
-      German:     { title:'Meeting beendet',         sub:'Der Host hat das Meeting beendet.',            btn:'Erfahrung bewerten' },
-      Spanish:    { title:'Reunión finalizada',      sub:'El anfitrión ha terminado la reunión.',        btn:'Califica tu experiencia' },
-      French:     { title:'Réunion terminée',        sub:"L'hôte a mis fin à la réunion.",               btn:'Évaluer votre expérience' },
-      Italian:    { title:'Riunione terminata',      sub:"L'host ha terminato la riunione.",             btn:'Valuta la tua esperienza' },
-      Japanese:   { title:'ミーティング終了',           sub:'ホストがミーティングを終了しました。',                  btn:'評価する' },
-      Portuguese: { title:'Reunião encerrada',       sub:'O anfitrião encerrou a reunião.',              btn:'Avaliar experiência' },
-      Turkish:    { title:'Toplantı sona erdi',      sub:'Toplantıyı ana sunucu sonlandırdı.',           btn:'Deneyimini değerlendir' },
-      Dutch:      { title:'Vergadering beëindigd',   sub:'De host heeft de vergadering beëindigd.',      btn:'Beoordeel uw ervaring' },
-      Korean:     { title:'회의가 종료되었습니다',        sub:'호스트가 회의를 종료했습니다.',                       btn:'경험 평가하기' },
-      Chinese:    { title:'会议已结束',               sub:'主持人已结束会议。',                               btn:'评价您的体验' },
-      Arabic:     { title:'انتهى الاجتماع',           sub:'أنهى المضيف الاجتماع.',                        btn:'قيّم تجربتك' },
-      Russian:    { title:'Встреча завершена',       sub:'Организатор завершил встречу.',                btn:'Оценить опыт' },
-      Polish:     { title:'Spotkanie zakończone',    sub:'Host zakończył spotkanie.',                    btn:'Oceń swoje doświadczenie' },
-      Swedish:    { title:'Mötet avslutades',        sub:'Värden avslutade mötet.',                      btn:'Betygsätt din upplevelse' },
-      Hindi:      { title:'मीटिंग समाप्त हुई',        sub:'होस्ट ने मीटिंग समाप्त कर दी।',               btn:'अनुभव रेट करें' },
-      Greek:      { title:'Η σύσκεψη τελείωσε',     sub:'Ο οικοδεσπότης τερμάτισε τη σύσκεψη.',        btn:'Αξιολόγησε την εμπειρία' },
-      Ukrainian:  { title:'Зустріч завершена',      sub:'Організатор завершив зустріч.',                btn:'Оцінити досвід' },
-    };
-
-    function showHostEndedOverlay() {
-        if (window.stopAgendaPolling) window.stopAgendaPolling();
-        if (window.TranslationManager) window.TranslationManager.stopTranslation();
-        var lang = localStorage.getItem('meetlingo_lang') || 'English';
-        var t = HOST_END_T[lang] || HOST_END_T['English'];
-        var overlay = document.createElement('div');
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;';
-        overlay.innerHTML = '<div style="background:#fff;border-radius:12px;padding:32px 24px;max-width:340px;width:100%;text-align:center;">'
-            + '<span class="material-symbols-outlined" style="font-size:48px;color:#95C11E;font-variation-settings:\'FILL\' 1;">meeting_room</span>'
-            + '<h2 style="font-size:22px;font-weight:700;color:#1a1c1c;margin:12px 0 8px;">' + t.title + '</h2>'
-            + '<p style="font-size:15px;color:#4f453a;margin-bottom:24px;">' + t.sub + '</p>'
-            + '<button id="host-ended-ok" style="background:#95C11E;color:#fff;border:none;border-radius:8px;padding:14px 32px;font-size:15px;font-weight:700;cursor:pointer;width:100%;">' + t.btn + '</button>'
-            + '</div>';
-        document.body.appendChild(overlay);
-        document.getElementById('host-ended-ok').addEventListener('click', function() {
-            intentionalLeave = true;
-            window.location.href = 'ended.html';
-        });
-    }
-
-    // ── Leave Confirmation ────────────────────────
-    var leaveModal     = document.getElementById('leave-confirm-modal');
-    var leaveOkBtn     = document.getElementById('leave-ok-btn');
-    var leaveCancelBtn = document.getElementById('leave-cancel-btn');
-
-    function showLeaveConfirm() {
-        var t = getT();
-        document.getElementById('leave-confirm-text').textContent = t.confirm_leave;
-        document.getElementById('leave-confirm-sub').textContent  = t.confirm_sub;
-        leaveOkBtn.textContent     = t.yes;
-        leaveCancelBtn.textContent = t.no;
-        leaveModal.style.display   = 'flex';
-    }
-    var intentionalLeave = false;
-    function doLeave() {
-        intentionalLeave = true;
-        if (window.stopAgendaPolling) window.stopAgendaPolling();
-        if (window.TranslationManager) window.TranslationManager.stopTranslation();
-        localStorage.setItem('meetlingo_meeting_end', Date.now().toString());
-        window.location.href = 'ended.html';
-    }
-
-    window.addEventListener('beforeunload', function(e) {
-        if (!intentionalLeave) { e.preventDefault(); e.returnValue = ''; }
-    });
-    leaveOkBtn.addEventListener('click', doLeave);
-    leaveCancelBtn.addEventListener('click', function() { leaveModal.style.display = 'none'; });
-
-    document.getElementById('back-arrow').addEventListener('click', showLeaveConfirm);
-    document.getElementById('leave-btn').addEventListener('click', showLeaveConfirm);
-    document.getElementById('logo-link').addEventListener('click', showLeaveConfirm);
-
-    // ── Language Picker Popup ─────────────────────
-    var langPickerPopup = document.getElementById('lang-picker-popup');
-    var langPickerOpen  = false;
-
-    document.getElementById('lang-btn').addEventListener('click', function(e) {
-        e.stopPropagation();
-        langPickerOpen = !langPickerOpen;
-        langPickerPopup.style.display = langPickerOpen ? 'block' : 'none';
-    });
-
-    document.querySelectorAll('.lang-pick-row').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            var newLang = btn.dataset.lang;
-            localStorage.setItem('meetlingo_lang', newLang);
-            langPickerOpen = false;
-            langPickerPopup.style.display = 'none';
-            applyUILanguage();
-            // Immediately re-register new language so server translates for it
-            if (window.meetlingoRegisterLang) window.meetlingoRegisterLang();
-        });
-    });
-
-    // Close popups when clicking elsewhere
-    document.addEventListener('click', function() {
-        if (langPickerPopup) { langPickerPopup.style.display = 'none'; langPickerOpen = false; }
-    });
-
-    // ── Apply language on load ────────────────────
-    applyUILanguage();
-</script>
-
-<!-- Subtle Background Accents -->
-<div class="fixed top-0 right-0 pointer-events-none opacity-10">
-<div class="w-64 h-64 bg-primary-fixed blur-[100px] rounded-full"></div>
-</div>
-<div class="fixed bottom-0 left-0 pointer-events-none opacity-10">
-<div class="w-80 h-80 bg-secondary-fixed-dim blur-[120px] rounded-full"></div>
-</div>
-
-<!-- MeetLingo scripts -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  // ── Session identity ──────────────────────────────────
-  var sessionId = 'ml_' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
-  function getLang() { return localStorage.getItem('meetlingo_lang') || 'English'; }
-
-  // ── lastId: start from current position, not from 0 (rejoin fix) ─
-  var lastId = -1;          // -1 = not yet initialised
-  var initialIdSet = false;
-
-  // ── Scroll / unread tracking ──────────────────────────
-  var historyEl   = document.getElementById('conversation-history');
-  var badge       = document.getElementById('unread-badge');
-  var unreadCount = 0;
-  var isAtBottom  = true;
-
-  if (badge) {
-    badge.addEventListener('click', function() {
-      if (historyEl) historyEl.scrollTop = historyEl.scrollHeight;
-      unreadCount = 0;
-      badge.style.display = 'none';
-    });
-  }
-
-  if (historyEl) {
-    historyEl.addEventListener('scroll', function() {
-      var distFromBottom = historyEl.scrollHeight - historyEl.scrollTop - historyEl.clientHeight;
-      isAtBottom = distFromBottom < 60;
-      if (isAtBottom) {
-        unreadCount = 0;
-        if (badge) badge.style.display = 'none';
-      }
-    });
-  }
-
-  // ── Register / keepalive ──────────────────────────────
-  function registerLang() {
-    fetch('/api/listener-register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lang: getLang(), sessionId: sessionId })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      // First registration only: set lastId to current server position (rejoin fix)
-      if (!initialIdSet && data.currentId !== undefined) {
-        lastId = data.currentId;
-        initialIdSet = true;
-      }
-    })
-    .catch(function(){});
-  }
-
-  window.meetlingoRegisterLang = registerLang;
-
-  registerLang();
-  setInterval(registerLang, 8000);
-  document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState === 'visible') registerLang();
+function applyUILanguage() {
+  var t = getT(), lang = getLang();
+  var vl = document.getElementById('nav-volume-label'); if (vl) vl.textContent = t.volume;
+  var ll = document.getElementById('nav-lang-label');   if (ll) ll.textContent = t.language;
+  var lv = document.getElementById('nav-leave-label');  if (lv) lv.textContent = t.leave;
+  var es = document.getElementById('empty-state');      if (es && es.parentNode) es.textContent = t.waiting;
+  var ag = document.getElementById('agenda-title');     if (ag) ag.textContent = t.agenda.toUpperCase();
+  var pt = document.getElementById('lang-picker-title'); if (pt) pt.textContent = t.picker;
+  // Mic status label (only if muted — live text set by updateMicUI)
+  var ms = document.getElementById('mic-status-label'); if (ms && MeetLingoRealtime.isMuted()) ms.textContent = t.muted;
+  // Mark current selection
+  document.querySelectorAll('.lang-pick-row').forEach(function(btn) {
+    var check = btn.querySelector('.lang-check');
+    if (check) check.style.opacity = (btn.dataset.lang === lang) ? '1' : '0';
+    btn.style.background = (btn.dataset.lang === lang) ? '#F9FFE8' : 'transparent';
   });
+  translateAgenda(lang);
+}
 
-  // ── Timer — synced to server start time ──────────────
-  fetch('/api/meeting-time')
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      var ts = data.startTime || parseInt(localStorage.getItem('meetlingo_meeting_start')) || Date.now();
-      // Sanity check: ignore timestamps older than 4 hours (stale from previous session)
-      if (Date.now() - ts > 4 * 60 * 60 * 1000) ts = Date.now();
-      window.meetingStartTs = ts;
-    })
-    .catch(function() {
-      var ts = parseInt(localStorage.getItem('meetlingo_meeting_start') || Date.now());
-      if (Date.now() - ts > 4 * 60 * 60 * 1000) ts = Date.now();
-      window.meetingStartTs = ts;
+// ── Agenda ────────────────────────────────────────────
+var agendaCache = {};
+var serverAgendaText = '';
+
+function displayAgendaText(text) {
+  var el = document.getElementById('agenda-display');
+  if (!el) return;
+  var lines = text.trim().split('\n');
+  el.innerHTML = lines.map(function(l) {
+    return l.trim() ? '<p class="text-body-md text-on-surface">' + l.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>' : '';
+  }).join('');
+}
+
+async function translateAgenda(lang) {
+  var original = serverAgendaText || localStorage.getItem('meetlingo_agenda');
+  if (!original || !original.trim()) return;
+  if (!lang) { displayAgendaText(original); return; }
+  if (agendaCache[lang]) { displayAgendaText(agendaCache[lang]); return; }
+  try {
+    var resp = await fetch('/api/translate-text', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: original, targetLanguage: lang })
     });
+    var data = await resp.json();
+    if (data.success && data.translation) { agendaCache[lang] = data.translation; displayAgendaText(data.translation); }
+  } catch(e) { console.warn('[Agenda] Translation failed:', e); }
+}
 
-  // ── Add message to chat ───────────────────────────────
-  function addToHistory(original, translated) {
-    if (!historyEl) return;
-    var emptyState = document.getElementById('empty-state');
-    if (emptyState) emptyState.remove();
-
-    var now  = new Date();
-    var time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    var div  = document.createElement('div');
-    div.style.cssText = 'display:flex;flex-direction:column;gap:8px;animation:fadeIn 0.3s ease;';
-    div.innerHTML =
-      '<div style="align-self:flex-start;max-width:85%;">'
-      + '<p style="font-size:12px;color:#555;margin:0 0 4px 6px;font-style:italic;">Speaker · ' + time + '</p>'
-      + '<div style="background:#A77F4E;color:white;padding:12px 16px;border-radius:16px;border-bottom-left-radius:4px;font-size:15px;line-height:1.5;">' + (original || '') + '</div>'
-      + '</div>'
-      + '<div style="align-self:flex-end;max-width:85%;">'
-      + '<p style="font-size:12px;color:#555;margin:0 0 4px 6px;font-style:italic;text-align:right;">Translated · ' + getLang() + '</p>'
-      + '<div style="background:#EEEEEE;color:#1A1A1A;padding:12px 16px;border-radius:16px;border-bottom-right-radius:4px;font-size:15px;line-height:1.5;">' + (translated || '') + '</div>'
-      + '</div>';
-    historyEl.appendChild(div);
-
-    if (isAtBottom) {
-      historyEl.scrollTop = historyEl.scrollHeight;
-    } else {
-      unreadCount++;
-      if (badge) {
-        badge.textContent = '↓ ' + unreadCount + (unreadCount === 1 ? ' neue Nachricht' : ' neue Nachrichten');
-        badge.style.display = 'block';
+// Agenda polling (5s — in case host saves after listener joined)
+(function() {
+  var agendaPollTimer = null;
+  function fetchAgenda() {
+    fetch('/api/agenda').then(function(r){return r.json();}).then(function(d) {
+      if (d.agenda && d.agenda.trim() && d.agenda !== serverAgendaText) {
+        serverAgendaText = d.agenda;
+        localStorage.setItem('meetlingo_agenda', d.agenda);
+        agendaCache = {};
+        translateAgenda(getLang());
       }
-    }
+    }).catch(function(){});
   }
+  fetchAgenda();
+  agendaPollTimer = setInterval(fetchAgenda, 5000);
+  window.stopAgendaPolling = function() { clearInterval(agendaPollTimer); agendaPollTimer = null; };
+})();
 
-  // ── No-signal indicator ───────────────────────────────
-  var _lastMsgTime   = Date.now();
-  var _noSignalShown = false;
-  var _noSignalEl    = document.getElementById('no-signal-bar');
-  var NO_SIGNAL_MS   = 30000; // 30s without a message → show indicator
+// ── Agenda toggle ─────────────────────────────────────
+(function() {
+  var agendaDisplay = document.getElementById('agenda-display');
+  var toggleIcon    = document.getElementById('agenda-toggle');
+  if (!toggleIcon || !agendaDisplay) return;
+  var collapsed = false;
+  toggleIcon.addEventListener('click', function() {
+    collapsed = !collapsed;
+    agendaDisplay.style.display   = collapsed ? 'none' : '';
+    toggleIcon.textContent = collapsed ? 'expand_less' : 'expand_more';
+  });
+})();
 
-  function _checkSignal() {
-    if (!_noSignalEl) return;
-    var silent = Date.now() - _lastMsgTime > NO_SIGNAL_MS;
-    if (silent && !_noSignalShown) {
-      _noSignalEl.style.display = 'flex';
-      _noSignalShown = true;
-    } else if (!silent && _noSignalShown) {
-      _noSignalEl.style.display = 'none';
-      _noSignalShown = false;
-    }
-  }
-  setInterval(_checkSignal, 5000);
+// ── Timer ─────────────────────────────────────────────
+(function() {
+  var el = document.getElementById('meeting-timer');
+  fetch('/api/meeting-time').then(function(r){return r.json();}).then(function(d) {
+    var ts = d.startTime || parseInt(localStorage.getItem('meetlingo_meeting_start')) || Date.now();
+    if (Date.now() - ts > 4*60*60*1000) ts = Date.now();
+    window.meetingStartTs = ts;
+  }).catch(function() {
+    var ts = parseInt(localStorage.getItem('meetlingo_meeting_start') || Date.now());
+    if (Date.now() - ts > 4*60*60*1000) ts = Date.now();
+    window.meetingStartTs = ts;
+  });
+  setInterval(function() {
+    if (!el) return;
+    var start = window.meetingStartTs || Date.now();
+    var elapsed = Math.max(0, Math.floor((Date.now() - start) / 1000));
+    el.textContent = String(Math.floor(elapsed/60)).padStart(2,'0') + ':' + String(elapsed%60).padStart(2,'0');
+  }, 1000);
+})();
 
-  // ── Poll for new translations ─────────────────────────
-  function startPolling() {
-    setInterval(async function() {
-      if (lastId < 0) return; // wait until initialIdSet
-      try {
-        var currentLang = getLang();
-        var res  = await fetch('/api/listener-poll?lang=' + encodeURIComponent(currentLang) + '&after=' + lastId);
-        var data = await res.json();
-        if (data.chunks && data.chunks.length > 0) {
-          _lastMsgTime = Date.now(); // reset signal timer
-          data.chunks.forEach(function(c) {
-            if (c.id > lastId) { lastId = c.id; addToHistory(c.original, c.translated); }
-          });
-        }
-      } catch(e) {}
-    }, 300);
-  }
+// ── Host-end detection (REST fallback) ───────────────
+var HOST_END_T = {
+  English:    { title:'Meeting ended',           sub:'The host has ended the meeting.',    btn:'Rate your experience' },
+  German:     { title:'Meeting beendet',         sub:'Der Host hat das Meeting beendet.',  btn:'Erfahrung bewerten' },
+  Spanish:    { title:'Reunión finalizada',      sub:'El anfitrión ha terminado.',         btn:'Califica tu experiencia' },
+  French:     { title:'Réunion terminée',        sub:"L'hôte a mis fin à la réunion.",     btn:'Évaluer votre expérience' },
+  Italian:    { title:'Riunione terminata',      sub:"L'host ha terminato.",               btn:'Valuta la tua esperienza' },
+  Japanese:   { title:'ミーティング終了',           sub:'ホストが終了しました。',               btn:'評価する' },
+  Portuguese: { title:'Reunião encerrada',       sub:'O anfitrião encerrou.',              btn:'Avaliar experiência' },
+  Turkish:    { title:'Toplantı sona erdi',      sub:'Ana sunucu sonlandırdı.',            btn:'Deneyimini değerlendir' },
+  Dutch:      { title:'Vergadering beëindigd',   sub:'De host heeft beëindigd.',           btn:'Beoordeel uw ervaring' },
+  Korean:     { title:'회의가 종료되었습니다',        sub:'호스트가 종료했습니다.',              btn:'경험 평가하기' },
+  Chinese:    { title:'会议已结束',               sub:'主持人已结束会议。',                  btn:'评价您的体验' },
+  Arabic:     { title:'انتهى الاجتماع',           sub:'أنهى المضيف الاجتماع.',             btn:'قيّم تجربتك' },
+  Russian:    { title:'Встреча завершена',       sub:'Организатор завершил.',              btn:'Оценить опыт' },
+  Polish:     { title:'Spotkanie zakończone',    sub:'Host zakończył spotkanie.',          btn:'Oceń swoje doświadczenie' },
+  Swedish:    { title:'Mötet avslutades',        sub:'Värden avslutade mötet.',            btn:'Betygsätt din upplevelse' },
+  Hindi:      { title:'मीटिंग समाप्त हुई',        sub:'होस्ट ने मीटिंग समाप्त की।',       btn:'अनुभव रेट करें' },
+  Greek:      { title:'Η σύσκεψη τελείωσε',     sub:'Ο οικοδεσπότης τερμάτισε.',         btn:'Αξιολόγησε την εμπειρία' },
+  Ukrainian:  { title:'Зустріч завершена',      sub:'Організатор завершив.',              btn:'Оцінити досвід' },
+};
 
-  // ── Gate: only enter if meeting is active ─────────────
-  fetch('/api/meeting-status')
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (!data.active) { window.location.href = 'waiting.html'; }
-      else { startPolling(); }
-    })
-    .catch(function() {
-      if (localStorage.getItem('meetlingo_meeting_active') !== 'true') {
-        window.location.href = 'waiting.html';
-      } else { startPolling(); }
-    });
+var hostEndedShown = false;
+function showHostEndedOverlay() {
+  if (hostEndedShown) return;
+  hostEndedShown = true;
+  if (window.stopAgendaPolling) window.stopAgendaPolling();
+  MeetLingoRealtime.disconnect();
+  var lang = getLang();
+  var t    = HOST_END_T[lang] || HOST_END_T['English'];
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;';
+  overlay.innerHTML = '<div style="background:#fff;border-radius:12px;padding:32px 24px;max-width:340px;width:100%;text-align:center;">'
+    + '<span class="material-symbols-outlined" style="font-size:48px;color:#95C11E;font-variation-settings:\'FILL\' 1;">meeting_room</span>'
+    + '<h2 style="font-size:22px;font-weight:700;color:#1a1c1c;margin:12px 0 8px;">' + t.title + '</h2>'
+    + '<p style="font-size:15px;color:#4f453a;margin-bottom:24px;">' + t.sub + '</p>'
+    + '<button id="host-ended-ok" style="background:#95C11E;color:#fff;border:none;border-radius:8px;padding:14px 32px;font-size:15px;font-weight:700;cursor:pointer;width:100%;">' + t.btn + '</button>'
+    + '</div>';
+  document.body.appendChild(overlay);
+  document.getElementById('host-ended-ok').addEventListener('click', function() {
+    intentionalLeave = true;
+    window.location.href = 'ended.html';
+  });
+}
+
+// Poll REST as fallback (in case WS meeting_ended missed)
+var _hostEndPollTimer = setInterval(function() {
+  if (hostEndedShown) { clearInterval(_hostEndPollTimer); return; }
+  fetch('/api/meeting-status').then(function(r){return r.json();}).then(function(d) {
+    if (!d.active) showHostEndedOverlay();
+  }).catch(function(){});
+}, 3000);
+
+// ── Leave handling ────────────────────────────────────
+var intentionalLeave = false;
+var leaveModal     = document.getElementById('leave-confirm-modal');
+var leaveOkBtn     = document.getElementById('leave-ok-btn');
+var leaveCancelBtn = document.getElementById('leave-cancel-btn');
+
+function showLeaveConfirm() {
+  var t = getT();
+  document.getElementById('leave-confirm-text').textContent = t.confirm_leave;
+  document.getElementById('leave-confirm-sub').textContent  = t.confirm_sub;
+  leaveOkBtn.textContent     = t.yes;
+  leaveCancelBtn.textContent = t.no;
+  leaveModal.style.display   = 'flex';
+}
+function doLeave() {
+  intentionalLeave = true;
+  if (window.stopAgendaPolling) window.stopAgendaPolling();
+  MeetLingoRealtime.disconnect();
+  localStorage.setItem('meetlingo_meeting_end', Date.now().toString());
+  window.location.href = 'ended.html';
+}
+
+window.addEventListener('beforeunload', function(e) { if (!intentionalLeave) { e.preventDefault(); e.returnValue = ''; } });
+leaveOkBtn.addEventListener('click', doLeave);
+leaveCancelBtn.addEventListener('click', function() { leaveModal.style.display = 'none'; });
+document.getElementById('back-arrow').addEventListener('click', showLeaveConfirm);
+document.getElementById('leave-btn').addEventListener('click', showLeaveConfirm);
+document.getElementById('logo-link').addEventListener('click', showLeaveConfirm);
+
+// ── Volume popup ──────────────────────────────────────
+var volumeBtn   = document.getElementById('volume-btn');
+var volumePopup = document.getElementById('volume-popup');
+var volSlider   = document.getElementById('vol-slider-popup');
+var volDisplay  = document.getElementById('vol-popup-display');
+var rawVol   = localStorage.getItem('meetlingo_volume');
+var savedVol = rawVol ? Math.round(parseFloat(rawVol) <= 1 ? parseFloat(rawVol)*100 : parseFloat(rawVol)) : 50;
+localStorage.setItem('meetlingo_volume', String(savedVol));
+volSlider.value = savedVol;
+volDisplay.textContent = savedVol + '%';
+
+volumeBtn.addEventListener('click', function(e) {
+  e.stopPropagation();
+  var lp = document.getElementById('lang-picker-popup');
+  if (lp) lp.style.display = 'none';
+  volumePopup.style.display = (volumePopup.style.display === 'none') ? 'block' : 'none';
 });
+volSlider.addEventListener('input', function() {
+  volDisplay.textContent = volSlider.value + '%';
+  localStorage.setItem('meetlingo_volume', volSlider.value);
+  MeetLingoRealtime.setVolume(parseInt(volSlider.value));
+});
+
+// ── Language picker popup ─────────────────────────────
+var langPickerPopup = document.getElementById('lang-picker-popup');
+var langPickerOpen  = false;
+
+document.getElementById('lang-btn').addEventListener('click', function(e) {
+  e.stopPropagation();
+  volumePopup.style.display = 'none';
+  langPickerOpen = !langPickerOpen;
+  langPickerPopup.style.display = langPickerOpen ? 'block' : 'none';
+});
+
+document.querySelectorAll('.lang-pick-row').forEach(function(btn) {
+  btn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var newLang = btn.dataset.lang;
+    MeetLingoRealtime.setLang(newLang);
+    langPickerOpen = false;
+    langPickerPopup.style.display = 'none';
+    agendaCache = {};
+    applyUILanguage();
+    updateMicUI();
+  });
+});
+
+document.addEventListener('click', function() {
+  volumePopup.style.display = 'none';
+  langPickerPopup.style.display = 'none';
+  langPickerOpen = false;
+});
+
+// ── Mic button ────────────────────────────────────────
+var micBtn    = document.getElementById('mic-btn');
+var micIcon   = document.getElementById('mic-icon');
+var micStatus = document.getElementById('mic-status-label');
+var _micEverStarted = false;
+
+function updateMicUI() {
+  var t = getT();
+  if (MeetLingoRealtime.isMuted()) {
+    micBtn.style.background  = '#FF4444';
+    micBtn.style.boxShadow   = '0 4px 20px rgba(255,68,68,0.4)';
+    micIcon.textContent      = 'mic_off';
+    micBtn.classList.remove('mic-live-pulse');
+    micStatus.textContent    = t.muted;
+  } else {
+    micBtn.style.background  = '#95C11E';
+    micBtn.style.boxShadow   = '0 4px 20px rgba(149,193,30,0.4)';
+    micIcon.textContent      = 'mic';
+    micStatus.textContent    = t.live + ' — ' + getLang();
+  }
+}
+
+micBtn.addEventListener('click', function() {
+  var nowMuted = !MeetLingoRealtime.isMuted();
+  MeetLingoRealtime.setMuted(nowMuted);
+
+  if (!nowMuted && !_micEverStarted) {
+    // First unmute: request mic permission (must be in user-gesture chain)
+    _micEverStarted = true;
+    MeetLingoRealtime.startMic(function() {
+      updateMicUI();
+    }, function(err) {
+      MeetLingoRealtime.setMuted(true);
+      updateMicUI();
+      alert('Microphone access denied. You can still hear translations.');
+    });
+  }
+  updateMicUI();
+});
+
+// Pulse on audio activity
+window.onMLAudioActivity = function() {
+  if (!MeetLingoRealtime.isMuted()) {
+    micBtn.classList.add('mic-live-pulse');
+    clearTimeout(window._mlPulseTimer);
+    window._mlPulseTimer = setTimeout(function() { micBtn.classList.remove('mic-live-pulse'); }, 900);
+  }
+};
+
+// ── Scroll / unread tracking ──────────────────────────
+var historyEl   = document.getElementById('conversation-history');
+var badge       = document.getElementById('unread-badge');
+var unreadCount = 0;
+var isAtBottom  = true;
+
+if (badge) badge.addEventListener('click', function() {
+  historyEl.scrollTop = historyEl.scrollHeight;
+  unreadCount = 0; badge.style.display = 'none';
+});
+if (historyEl) historyEl.addEventListener('scroll', function() {
+  var dist = historyEl.scrollHeight - historyEl.scrollTop - historyEl.clientHeight;
+  isAtBottom = dist < 60;
+  if (isAtBottom) { unreadCount = 0; if (badge) badge.style.display = 'none'; }
+});
+
+// ── No-signal indicator ───────────────────────────────
+var _lastMsgTime = Date.now();
+var _noSignalEl  = document.getElementById('no-signal-bar');
+setInterval(function() {
+  if (!_noSignalEl) return;
+  var silent = Date.now() - _lastMsgTime > 30000;
+  _noSignalEl.style.display = silent ? 'flex' : 'none';
+}, 5000);
+
+// ── Add translation to chat ───────────────────────────
+function addToHistory(transcript) {
+  if (!transcript || !transcript.trim()) return;
+  if (!historyEl) return;
+  _lastMsgTime = Date.now();
+  var emptyState = document.getElementById('empty-state');
+  if (emptyState) emptyState.remove();
+
+  var now  = new Date();
+  var time = now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  var div  = document.createElement('div');
+  div.style.cssText = 'display:flex;flex-direction:column;gap:0;animation:fadeIn 0.3s ease;';
+  div.innerHTML =
+    '<div style="align-self:flex-end;max-width:85%;">'
+    + '<p style="font-size:12px;color:#555;margin:0 0 4px 6px;font-style:italic;text-align:right;">Translated · ' + getLang() + ' · ' + time + '</p>'
+    + '<div style="background:#EEEEEE;color:#1A1A1A;padding:12px 16px;border-radius:16px;border-bottom-right-radius:4px;font-size:15px;line-height:1.5;">' + transcript.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>'
+    + '</div>';
+  historyEl.appendChild(div);
+
+  if (isAtBottom) {
+    historyEl.scrollTop = historyEl.scrollHeight;
+  } else {
+    unreadCount++;
+    if (badge) {
+      badge.textContent  = '↓ ' + unreadCount + (unreadCount === 1 ? ' neue Nachricht' : ' neue Nachrichten');
+      badge.style.display = 'block';
+    }
+  }
+}
+
+// ── WebSocket callbacks ───────────────────────────────
+window.onMLTranscript    = function(text) { addToHistory(text); };
+window.onMLMeetingEnded  = function()     { showHostEndedOverlay(); };
+window.onMLError         = function(msg)  { console.warn('[Meeting] WS error:', msg); };
+
+// ── Init: check meeting active, then connect WS ───────
+fetch('/api/meeting-status')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (!d.active) { window.location.href = 'waiting.html'; return; }
+    MeetLingoRealtime.connect();
+    applyUILanguage();
+    updateMicUI();
+  })
+  .catch(function() {
+    if (localStorage.getItem('meetlingo_meeting_active') !== 'true') {
+      window.location.href = 'waiting.html'; return;
+    }
+    MeetLingoRealtime.connect();
+    applyUILanguage();
+    updateMicUI();
+  });
 </script>
-</body></html>
+</body>
+</html>
