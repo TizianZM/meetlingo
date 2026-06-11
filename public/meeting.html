@@ -226,16 +226,6 @@
   font-family: 'Source Sans 3', sans-serif;
 ">↓ Neue Nachrichten</button>
 </main>
-<!-- Volume Popup -->
-<div id="volume-popup" style="display:none;" class="fixed bottom-[88px] left-1/2 -translate-x-1/2 bg-white border border-surface-container rounded-xl p-4 shadow-lg z-[60] w-52">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-[#555555] text-lg">volume_down</span>
-<input type="range" min="0" max="100" value="50" id="vol-slider-popup" class="flex-1 h-1.5 accent-[#95C11E] cursor-pointer">
-<span class="material-symbols-outlined text-[#555555] text-lg">volume_up</span>
-</div>
-<div class="text-center mt-2 text-sm font-medium text-[#555555]" id="vol-popup-display">50%</div>
-</div>
-
 <!-- Language Picker Popup — max 50vh, scrollbar für erweiterte Sprachen -->
 <div id="lang-picker-popup" style="display:none; position:fixed; bottom:82px; left:0; right:0; z-index:55; padding:0 12px 6px;">
   <div style="background:white; border-radius:16px; border:1px solid #EEEEEE; box-shadow:0 -8px 32px rgba(0,0,0,0.15); display:flex; flex-direction:column; max-height:50vh; overflow:hidden;">
@@ -284,18 +274,14 @@
 </div>
 
 <!-- Bottom Navigation -->
-<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-between items-center px-2 h-20 bg-surface-container-lowest border-t border-surface-container">
-<button id="volume-btn" class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors w-1/3 h-full">
-<span class="material-symbols-outlined text-2xl mb-1">volume_up</span>
-<span class="text-[10px] font-bold uppercase tracking-wider" id="nav-volume-label">Volume</span>
-</button>
-<div class="w-1/3 h-full flex items-center justify-center px-1">
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-center items-center gap-3 px-4 h-20 bg-surface-container-lowest border-t border-surface-container">
+<div class="flex-1 h-full flex items-center justify-center px-1">
 <button id="lang-btn" class="flex flex-col items-center justify-center bg-[#95C11E] text-white w-full py-3 rounded-xl shadow-sm">
 <span class="material-symbols-outlined text-2xl mb-1">translate</span>
 <span class="text-[10px] font-bold uppercase tracking-wider" id="nav-lang-label">Language</span>
 </button>
 </div>
-<div class="w-1/3 h-full flex items-center justify-center px-1">
+<div class="flex-1 h-full flex items-center justify-center px-1">
 <button class="flex flex-col items-center justify-center bg-[#FEE2E2] text-[#991B1B] w-full py-3 rounded-xl hover:bg-[#FCA5A5] transition-colors" id="leave-btn">
 <span class="material-symbols-outlined text-2xl mb-1">logout</span>
 <span class="text-[10px] font-bold uppercase tracking-wider" id="nav-leave-label">Leave</span>
@@ -334,7 +320,6 @@
         var lang = getLang();
         // Nav labels
         var ml = document.getElementById('nav-mute-label');    if (ml) ml.textContent = t.mute;
-        var vl = document.getElementById('nav-volume-label');  if (vl) vl.textContent = t.volume;
         var ll = document.getElementById('nav-lang-label');    if (ll) ll.textContent = t.language;
         var lv = document.getElementById('nav-leave-label');   if (lv) lv.textContent = t.leave;
         // Empty state
@@ -527,36 +512,12 @@
     document.getElementById('leave-btn').addEventListener('click', showLeaveConfirm);
     document.getElementById('logo-link').addEventListener('click', showLeaveConfirm);
 
-    // ── Volume popup ──────────────────────────────
-    var volumeBtn   = document.getElementById('volume-btn');
-    var volumePopup = document.getElementById('volume-popup');
-    var volSlider   = document.getElementById('vol-slider-popup');
-    var volDisplay  = document.getElementById('vol-popup-display');
-    var rawVol   = localStorage.getItem('meetlingo_volume');
-    var savedVol = rawVol ? Math.round(parseFloat(rawVol) <= 1 ? parseFloat(rawVol) * 100 : parseFloat(rawVol)) : 50;
-    localStorage.setItem('meetlingo_volume', String(savedVol));
-    volSlider.value = savedVol;
-    volDisplay.textContent = savedVol + '%';
-
-    volumeBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        var langPicker = document.getElementById('lang-picker-popup');
-        if (langPicker) langPicker.style.display = 'none';
-        volumePopup.style.display = (volumePopup.style.display === 'none') ? 'block' : 'none';
-    });
-    volSlider.addEventListener('input', function() {
-        volDisplay.textContent = volSlider.value + '%';
-        localStorage.setItem('meetlingo_volume', volSlider.value);
-        if (window.TranslationManager) window.TranslationManager.setVolume(parseInt(volSlider.value));
-    });
-
     // ── Language Picker Popup ─────────────────────
     var langPickerPopup = document.getElementById('lang-picker-popup');
     var langPickerOpen  = false;
 
     document.getElementById('lang-btn').addEventListener('click', function(e) {
         e.stopPropagation();
-        if (volumePopup) volumePopup.style.display = 'none';
         langPickerOpen = !langPickerOpen;
         langPickerPopup.style.display = langPickerOpen ? 'block' : 'none';
     });
