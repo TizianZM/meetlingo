@@ -170,30 +170,74 @@
 </header>
 
 <!-- ── Active Meeting View (hidden until START) ── -->
-<div id="host-active-view" style="display:none;flex-direction:column;align-items:center;gap:16px;padding:24px 16px;max-width:500px;margin:0 auto;width:100%;">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;">
-    <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:20px;text-align:center;">
-      <span class="material-symbols-outlined" style="color:#95C11E;font-size:28px;font-variation-settings:'FILL' 1;">group</span>
-      <div style="font-size:28px;font-weight:700;color:#1a1c1c;" id="active-guest-count">0</div>
-      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Listeners</div>
+<div id="host-active-view" style="display:none;flex-direction:column;align-items:center;gap:14px;padding:20px 16px 160px;max-width:500px;margin:0 auto;width:100%;">
+
+  <!-- Mic + status row -->
+  <div style="display:flex;align-items:center;gap:12px;width:100%;background:#fff;border:1px solid #eee;border-radius:12px;padding:16px 20px;">
+    <button id="active-mute-btn" style="background:#e03030;border:none;border-radius:50%;width:52px;height:52px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <span id="active-mute-icon" class="material-symbols-outlined" style="color:#fff;font-size:26px;font-variation-settings:'FILL' 1;">mic</span>
+    </button>
+    <div>
+      <div id="active-mute-label" style="font-size:15px;font-weight:700;color:#1a1c1c;">Live</div>
+      <div style="font-size:13px;color:#888;" id="active-listener-line">0 listeners</div>
     </div>
-    <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:20px;text-align:center;">
-      <button id="active-mute-btn" style="background:#e03030;border:none;border-radius:50%;width:52px;height:52px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;">
-        <span id="active-mute-icon" class="material-symbols-outlined" style="color:#fff;font-size:26px;font-variation-settings:'FILL' 1;">mic</span>
-      </button>
-      <div id="active-mute-label" style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Live</div>
+    <div id="active-speaking-pill" style="margin-left:auto;display:none;background:#1a1c1c;color:#fff;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;white-space:nowrap;align-items:center;gap:5px;">
+      <span style="display:inline-block;width:7px;height:7px;background:#95C11E;border-radius:50%;animation:live-dot 1.2s infinite;"></span>
+      <span id="active-speaking-name">...</span>
     </div>
   </div>
+
+  <!-- Dual waveform (input = mic green, output = listener blue) -->
+  <div style="background:#fff;border:1px solid #eee;border-radius:12px;width:100%;padding:14px 16px;">
+    <div style="display:flex;gap:12px;align-items:stretch;">
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:11px;font-weight:700;color:#95C11E;text-transform:uppercase;letter-spacing:.07em;">Your Voice</div>
+        <canvas id="host-input-wave" width="220" height="48" style="width:100%;height:48px;border-radius:8px;background:#F9FFE8;display:block;"></canvas>
+      </div>
+      <div style="width:1px;background:#f0f0f0;"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:11px;font-weight:700;color:#4B9FFF;text-transform:uppercase;letter-spacing:.07em;">Listeners</div>
+        <canvas id="host-output-wave" width="220" height="48" style="width:100%;height:48px;border-radius:8px;background:#EFF6FF;display:block;"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Participants panel -->
+  <div style="background:#fff;border:1px solid #eee;border-radius:12px;width:100%;overflow:hidden;">
+    <div style="padding:10px 16px;background:#fafafa;border-bottom:1px solid #f0f0f0;font-size:13px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:6px;">
+      <span class="material-symbols-outlined" style="color:#95C11E;font-size:16px;">group</span> Participants
+      <span id="active-guest-count" style="margin-left:auto;font-size:13px;font-weight:700;color:#95C11E;">0</span>
+    </div>
+    <div id="active-participants-list" style="max-height:220px;overflow-y:auto;">
+      <p id="active-no-participants" style="color:#aaa;font-size:14px;font-style:italic;text-align:center;padding:20px;">No listeners yet</p>
+    </div>
+  </div>
+
+  <!-- Live transcript panel -->
   <div style="background:#fff;border:1px solid #eee;border-radius:12px;width:100%;overflow:hidden;">
     <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fafafa;border-bottom:1px solid #f0f0f0;">
       <span class="material-symbols-outlined" style="color:#95C11E;font-size:18px;">transcribe</span>
-      <span style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.07em;">Live Transcription</span>
-      <span id="active-rec-dot" style="margin-left:auto;font-size:11px;color:#95C11E;font-weight:600;">● Recording</span>
+      <span style="font-size:13px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.07em;">Live Transcription</span>
+      <span id="active-rec-dot" style="margin-left:auto;font-size:13px;color:#95C11E;font-weight:600;">● Rec</span>
     </div>
-    <div id="active-transcript" style="padding:12px 16px;min-height:100px;max-height:200px;overflow-y:auto;">
+    <div id="active-transcript" style="padding:12px 16px;min-height:220px;max-height:45vh;overflow-y:auto;">
       <p id="active-placeholder" style="color:#aaa;font-size:14px;font-style:italic;">Start speaking...</p>
     </div>
   </div>
+
+  <!-- Agenda panel (editable during the meeting) -->
+  <div style="background:#fff;border:1px solid #eee;border-radius:12px;width:100%;overflow:hidden;">
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fafafa;border-bottom:1px solid #f0f0f0;">
+      <span class="material-symbols-outlined" style="color:#95C11E;font-size:18px;">list_alt</span>
+      <span style="font-size:13px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.07em;">Agenda</span>
+      <span id="active-agenda-saved" style="margin-left:auto;font-size:12px;color:#95C11E;font-weight:600;opacity:0;transition:opacity .3s;">Saved ✓</span>
+    </div>
+    <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
+      <textarea id="active-agenda-input" rows="3" placeholder="Update the agenda — guests see changes live" style="width:100%;border:1px solid #e5e5e5;border-radius:8px;padding:10px 12px;font-size:14px;font-family:'Source Sans 3',sans-serif;resize:vertical;outline:none;"></textarea>
+      <button id="active-agenda-save" style="align-self:flex-end;background:#95C11E;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Source Sans 3',sans-serif;">Update Agenda</button>
+    </div>
+  </div>
+
 </div>
 
 <!-- ── Main Content ── -->
@@ -205,26 +249,33 @@
         <span class="text-label-md uppercase tracking-widest text-[#A77F4E] font-bold">Presenter View</span>
     </div>
 
-    <!-- ── PRESENTER LANGUAGE ── -->
+
+    <!-- ── HOST NAME ── -->
     <div class="w-full bg-white border border-surface-container rounded-xl p-5 shadow-sm">
         <div class="flex items-center gap-2 mb-3">
-            <span class="material-symbols-outlined text-[#95C11E] text-[20px]">mic</span>
-            <span class="text-label-md uppercase tracking-widest text-[#555555] font-bold">Presenter Language</span>
+            <span class="material-symbols-outlined text-[#A77F4E] text-[18px]">badge</span>
+            <span class="text-label-md uppercase tracking-widest text-[#555555] font-bold">Your Name (visible to guests)</span>
         </div>
-        <p class="text-caption text-tertiary mb-3">The language <em>you</em> speak — used by Whisper for transcription.</p>
-        <select id="host-lang-select" style="width:100%;padding:10px 14px;border:1.5px solid #EEEEEE;border-radius:10px;font-size:15px;font-family:'Source Sans 3',sans-serif;color:#1a1c1c;background:white;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><path fill=%22%23888%22 d=%22M7 10l5 5 5-5z%22/></svg>');background-repeat:no-repeat;background-position:right 12px center;background-size:20px;cursor:pointer;">
-            <option value="de">🇩🇪 German — Deutsch</option>
-            <option value="en">🇬🇧 English</option>
-            <option value="fr">🇫🇷 French — Français</option>
-            <option value="es">🇪🇸 Spanish — Español</option>
-            <option value="it">🇮🇹 Italian — Italiano</option>
-            <option value="pt">🇵🇹 Portuguese — Português</option>
-            <option value="nl">🇳🇱 Dutch — Nederlands</option>
-            <option value="pl">🇵🇱 Polish — Polski</option>
-            <option value="ru">🇷🇺 Russian — Русский</option>
-            <option value="tr">🇹🇷 Turkish — Türkçe</option>
-            <option value="ja">🇯🇵 Japanese — 日本語</option>
-            <option value="zh">🇨🇳 Chinese — 中文</option>
+        <input
+            type="text"
+            id="host-name-input"
+            maxlength="20"
+            placeholder="Presenter name…"
+            autocomplete="given-name"
+            class="w-full px-3 py-2.5 rounded-lg border text-body-md text-on-surface bg-surface-container-low focus:outline-none focus:border-[#95C11E] transition-colors"
+            style="font-family:'Source Sans 3',sans-serif;border-color:#D3C4B6;"
+        />
+        <!-- Host spoken language (important: must match language you actually speak) -->
+        <div class="flex items-center gap-2 mt-3">
+            <span class="material-symbols-outlined text-[#A77F4E] text-[18px]">language</span>
+            <span class="text-label-md uppercase tracking-widest text-[#555555] font-bold text-[11px]">I speak (my language)</span>
+        </div>
+        <select
+            id="host-lang-select"
+            class="w-full px-3 py-2.5 rounded-lg border text-body-md text-on-surface bg-surface-container-low focus:outline-none focus:border-[#95C11E] transition-colors mt-1"
+            style="font-family:'Source Sans 3',sans-serif;border-color:#D3C4B6;"
+        >
+            <!-- options generated from LANG_FLAGS at init -->
         </select>
     </div>
 
@@ -284,13 +335,13 @@
         <h2 class="text-label-md uppercase tracking-widest text-tertiary font-bold mb-4">Share Meeting QR</h2>
         <!-- Real QR code rendered here by qrcode.js -->
         <div id="qr-container" class="mb-3 flex items-center justify-center" style="width:160px;height:160px;"></div>
-        <p class="text-caption text-tertiary mb-2">Guests scan this to join</p>
+        <p style="font-size:14px;color:#555;margin-bottom:8px;">Guests scan this to join</p>
         <!-- Shareable URL with copy button -->
-        <div style="display:flex;align-items:center;gap:6px;background:#f5f5f5;border-radius:8px;padding:7px 10px;width:100%;max-width:260px;">
-          <p id="qr-url" style="font-size:11px;color:#4b6400;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;font-family:'Source Sans 3',sans-serif;"></p>
-          <button id="qr-copy-btn" onclick="(function(){var t=document.getElementById('qr-url').textContent;navigator.clipboard.writeText(t).then(function(){var b=document.getElementById('qr-copy-btn');b.textContent='✓';setTimeout(function(){b.textContent='Copy';},1500);})})()" style="background:#95C11E;color:white;border:none;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Source Sans 3',sans-serif;">Copy</button>
+        <div style="display:flex;align-items:center;gap:8px;background:#f5f5f5;border-radius:10px;padding:9px 12px;width:100%;max-width:280px;">
+          <p id="qr-url" style="font-size:13px;color:#4b6400;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;font-family:'Source Sans 3',sans-serif;"></p>
+          <button id="qr-copy-btn" onclick="(function(){var t=document.getElementById('qr-url').textContent;navigator.clipboard.writeText(t).then(function(){var b=document.getElementById('qr-copy-btn');b.textContent='✓';setTimeout(function(){b.textContent='Copy';},1500);})})()" style="background:#95C11E;color:white;border:none;border-radius:7px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Source Sans 3',sans-serif;min-height:36px;">Copy</button>
         </div>
-        <p id="qr-local-hint" style="display:none;font-size:10px;color:#A77F4E;margin-top:6px;text-align:center;font-family:'Source Sans 3',sans-serif;">⚠️ Local server — guests must be on the same WiFi network</p>
+        <p id="qr-local-hint" style="display:none;font-size:12px;color:#A77F4E;margin-top:8px;text-align:center;font-family:'Source Sans 3',sans-serif;">⚠️ Guests must be on the same WiFi network</p>
     </div>
 
 </main>
@@ -329,11 +380,9 @@
 </div>
 
 <script>
-    // Clear leftover session data + reset server queue
-    localStorage.removeItem('meetlingo_meeting_active');
-    localStorage.removeItem('meetlingo_meeting_start');
-    localStorage.removeItem('meetlingo_meeting_end');
-    fetch('/api/reset-session', { method: 'POST' });
+    // NOTE: stale-state cleanup happens conditionally below (see auto-resume),
+    // never unconditionally — a mid-meeting reload must NOT wipe the live
+    // session, otherwise the host is stranded on the setup view.
 
     var sessionStarted = false;
     var timerInterval  = null;
@@ -403,18 +452,50 @@
                 'Guests will start receiving live translations.',
                 'Start', '#95C11E',
                 function() {
-                    sessionStarted = true;
-                    startTimer();
-                    fetch('/api/meeting-start', { method: 'POST' });
+                    // Save agenda to server now (so listeners see it immediately)
+                    var agendaEl = document.getElementById('agenda-input');
+                    var agendaText = agendaEl ? agendaEl.value : '';
+                    if (agendaText.trim()) {
+                        localStorage.setItem('meetlingo_agenda', agendaText);
+                        fetch('/api/agenda', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ agenda: agendaText })
+                        });
+                    }
 
-                    // Switch to active view
-                    document.getElementById('host-setup-view').style.display = 'none';
-                    document.getElementById('host-active-view').style.display = 'flex';
-
-                    actionBtn.style.backgroundColor = '#FF4444';
-                    actionIcon.textContent = 'call_end';
-                    actionLabel.textContent = 'END MEETING';
-                    // WS already connected — host unmutes manually via the mic button
+                    // Request mic permission right now — before switching views
+                    _micEverStarted = true;
+                    MeetLingoRealtime.startMic(
+                        function() {
+                            // Mic granted → go live immediately
+                            sessionStarted = true;
+                            startTimer();
+                            fetch('/api/meeting-start', { method: 'POST' });
+                            _activeMuted = false;
+                            MeetLingoRealtime.setMuted(false);
+                            document.getElementById('host-setup-view').style.display = 'none';
+                            document.getElementById('host-active-view').style.display = 'flex';
+                            actionBtn.style.backgroundColor = '#FF4444';
+                            actionIcon.textContent = 'call_end';
+                            actionLabel.textContent = 'END MEETING';
+                            updateHostMicUI();
+                            // Start waveform visualizations (mic is live, AudioContext is running)
+                            setTimeout(function() {
+                                var inCanvas  = document.getElementById('host-input-wave');
+                                var outCanvas = document.getElementById('host-output-wave');
+                                var inA  = MeetLingoRealtime.getInputAnalyser();
+                                var outA = MeetLingoRealtime.getOutputAnalyser();
+                                if (inA  && inCanvas)  MeetLingoWaveform.start(inCanvas,  inA,  '#95C11E');
+                                if (outA && outCanvas) MeetLingoWaveform.start(outCanvas, outA, '#4B9FFF');
+                            }, 200);
+                        },
+                        function(err) {
+                            // Mic denied → stay on setup, show actionable error
+                            _micEverStarted = false;
+                            showHostError('Microphone blocked — allow mic access in browser settings, then try again.');
+                        }
+                    );
                 }
             );
         } else {
@@ -435,9 +516,68 @@
         }
     });
 
+    // ── Auto-resume after page reload during an active meeting ──
+    // The SERVER is the source of truth (the localStorage flag is unreliable —
+    // it's shared across tabs and cleared on END). On every host load:
+    //   • server meeting active  → resume into the live view (restart mic)
+    //   • server meeting inactive → clear stale local flags + reset session
+    (function() {
+        fetch('/api/meeting-status').then(function(r) { return r.json(); }).then(function(d) {
+            if (!d.active) {
+                // Fresh start — clear leftovers from a previous meeting
+                localStorage.removeItem('meetlingo_meeting_active');
+                localStorage.removeItem('meetlingo_meeting_start');
+                localStorage.removeItem('meetlingo_meeting_end');
+                fetch('/api/reset-session', { method: 'POST' });
+                return;
+            }
+            sessionStarted = true;
+            // Continue the existing timer. Prefer the server's authoritative
+            // start time (d.startTime) over the local marker, which may be
+            // missing or stale after a reload.
+            var storedStart = d.startTime || parseInt(localStorage.getItem('meetlingo_meeting_start')) || Date.now();
+            localStorage.setItem('meetlingo_meeting_start', String(storedStart));
+            localStorage.setItem('meetlingo_meeting_active', 'true');
+            clearInterval(timerInterval);
+            timerInterval = setInterval(function() {
+                var elapsed = Math.floor((Date.now() - storedStart) / 1000);
+                var text = fmt(elapsed);
+                if (timerEl)    timerEl.textContent    = text;
+                if (durationEl) durationEl.textContent = text;
+            }, 1000);
+            _micEverStarted = true;
+            MeetLingoRealtime.startMic(function() {
+                _activeMuted = false;
+                MeetLingoRealtime.setMuted(false);
+                document.getElementById('host-setup-view').style.display = 'none';
+                document.getElementById('host-active-view').style.display = 'flex';
+                actionBtn.style.backgroundColor = '#FF4444';
+                actionIcon.textContent = 'call_end';
+                actionLabel.textContent = 'END MEETING';
+                updateHostMicUI();
+                setTimeout(function() {
+                    var inCanvas  = document.getElementById('host-input-wave');
+                    var outCanvas = document.getElementById('host-output-wave');
+                    var inA  = MeetLingoRealtime.getInputAnalyser();
+                    var outA = MeetLingoRealtime.getOutputAnalyser();
+                    if (inA  && inCanvas)  MeetLingoWaveform.start(inCanvas,  inA,  '#95C11E');
+                    if (outA && outCanvas) MeetLingoWaveform.start(outCanvas, outA, '#4B9FFF');
+                }, 200);
+            }, function() {
+                showHostError('Meeting is live — press START to re-enable your microphone.');
+            });
+        }).catch(function() {});
+    })();
+
     // ── Mic-Knopf: Mute/Unmute während Session ───
 
     // ── Live Listener Stats ───────────────────────
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, function(c) {
+        return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+      });
+    }
+
     var LANG_FLAGS = {
       English: '🇬🇧', German: '🇩🇪', Spanish: '🇪🇸', French: '🇫🇷',
       Italian: '🇮🇹', Japanese: '🇯🇵', Portuguese: '🇵🇹', Turkish: '🇹🇷',
@@ -446,50 +586,67 @@
       Greek: '🇬🇷', Ukrainian: '🇺🇦'
     };
 
-    function updateListenerStats() {
-      fetch('/api/listener-stats')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          var total = data.total || 0;
-          var counts = data.counts || {};
+    // Setup-view language breakdown — event-driven from the WS participant_list
+    // (rendered by renderParticipants), no REST polling needed.
+    function renderLangBreakdown(listeners) {
+      var container = document.getElementById('lang-breakdown');
+      if (!container) return;
+      var counts = {};
+      listeners.forEach(function(p) { counts[p.lang] = (counts[p.lang] || 0) + 1; });
+      var langs = Object.keys(counts);
 
-          // Update both total-listener counters (setup view + active view)
-          var gc = document.getElementById('guest-count');
-          if (gc) gc.textContent = total;
-          var agc = document.getElementById('active-guest-count');
-          if (agc) agc.textContent = total;
+      if (langs.length === 0) {
+        container.innerHTML = '<p style="color:#aaa;font-size:14px;font-style:italic;text-align:center;padding:16px 0;">No guests connected yet</p>';
+        return;
+      }
 
-          // Rebuild language breakdown
-          var container = document.getElementById('lang-breakdown');
-          if (!container) return;
-          var langs = Object.keys(counts).filter(function(l) { return counts[l] > 0; });
-
-          if (langs.length === 0) {
-            container.innerHTML = '<p style="color:#aaa;font-size:14px;font-style:italic;text-align:center;padding:16px 0;">No guests connected yet</p>';
-            return;
-          }
-
-          container.innerHTML = langs.sort().map(function(lang) {
-            var flag  = LANG_FLAGS[lang] || '🌐';
-            var count = counts[lang];
-            return '<div style="background:white;border:1px solid #EEEEEE;border-radius:12px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;">'
-              + '<div style="display:flex;align-items:center;gap:12px;">'
-              + '<span style="font-size:20px;">' + flag + '</span>'
-              + '<span style="font-size:15px;font-weight:600;color:#1a1c1c;">' + lang + '</span>'
-              + '</div>'
-              + '<div style="display:flex;align-items:center;gap:4px;">'
-              + '<span style="font-size:16px;font-weight:700;color:#95C11E;">' + count + '</span>'
-              + '<span style="font-size:12px;color:#888;">&nbsp;' + (count === 1 ? 'guest' : 'guests') + '</span>'
-              + '</div>'
-              + '</div>';
-          }).join('');
-        })
-        .catch(function() {});
+      container.innerHTML = langs.sort().map(function(lang) {
+        var flag  = LANG_FLAGS[lang] || '🌐';
+        var count = counts[lang];
+        return '<div style="background:white;border:1px solid #EEEEEE;border-radius:12px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;">'
+          + '<div style="display:flex;align-items:center;gap:12px;">'
+          + '<span style="font-size:20px;">' + flag + '</span>'
+          + '<span style="font-size:15px;font-weight:600;color:#1a1c1c;">' + escapeHtml(lang) + '</span>'
+          + '</div>'
+          + '<div style="display:flex;align-items:center;gap:4px;">'
+          + '<span style="font-size:16px;font-weight:700;color:#95C11E;">' + count + '</span>'
+          + '<span style="font-size:12px;color:#888;">&nbsp;' + (count === 1 ? 'guest' : 'guests') + '</span>'
+          + '</div>'
+          + '</div>';
+      }).join('');
     }
 
-    // Poll immediately + every 3 seconds
-    updateListenerStats();
-    setInterval(updateListenerStats, 3000);
+    // ── Host Name Input ────────────────────────
+    (function() {
+        var nameInput = document.getElementById('host-name-input');
+        if (!nameInput) return;
+        var saved = localStorage.getItem('meetlingo_name');
+        if (saved) nameInput.value = saved;
+        nameInput.addEventListener('input', function() {
+            var name = nameInput.value.trim() || 'Host';
+            MeetLingoRealtime.setName(name); // updates localStorage + sends name_change to server
+        });
+    })();
+
+    // ── Host spoken language selector ────────────
+    (function() {
+        var sel = document.getElementById('host-lang-select');
+        if (!sel) return;
+        // Build options from LANG_FLAGS — single source for all language UI
+        sel.innerHTML = Object.keys(LANG_FLAGS).map(function(lang) {
+            return '<option value="' + lang + '">' + LANG_FLAGS[lang] + ' ' + lang + '</option>';
+        }).join('');
+        // Default to English for the host (NOT the listener preference from localStorage)
+        // Use a separate key so listener prefs don't bleed into host's spoken language
+        var savedLang = localStorage.getItem('meetlingo_host_lang') || 'English';
+        sel.value = savedLang;
+        // realtime.js reads meetlingo_host_lang directly in host mode —
+        // never write meetlingo_lang here (would contaminate listener tabs)
+        localStorage.setItem('meetlingo_host_lang', savedLang);
+        sel.addEventListener('change', function() {
+            MeetLingoRealtime.setLang(sel.value); // writes meetlingo_host_lang + sends lang_change
+        });
+    })();
 
     // ── Editable Agenda ─────────────────────────
     (function() {
@@ -498,7 +655,15 @@
         var saveBtn    = document.getElementById('agenda-save-btn');
         if (!input) return;
         var saved = localStorage.getItem('meetlingo_agenda');
-        if (saved) input.value = saved;
+        if (saved) {
+            input.value = saved;
+            // Auto-restore to server (handles server restarts — server is in-memory only)
+            fetch('/api/agenda', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ agenda: saved })
+            }).catch(function() {});
+        }
 
         function doSave() {
             localStorage.setItem('meetlingo_agenda', input.value);
@@ -550,6 +715,7 @@
 <!-- MeetLingo scripts -->
 <script>window.ML_HOST_MODE = true;</script>
 <script src="/js/realtime.js"></script>
+<script src="/js/waveform.js"></script>
 <script>
   // ── Active view: mute toggle ──────────────────────
   var _activeMuted = true; // default: muted
@@ -574,15 +740,7 @@
     _activeMuteBtn.addEventListener('click', function() {
       _activeMuted = !_activeMuted;
       MeetLingoRealtime.setMuted(_activeMuted);
-      if (!_activeMuted && !_micEverStarted) {
-        _micEverStarted = true;
-        MeetLingoRealtime.startMic(null, function(err) {
-          _activeMuted = true;
-          MeetLingoRealtime.setMuted(true);
-          updateHostMicUI();
-          showHostError('Mic denied — ' + (err ? err.message : 'check browser settings'));
-        });
-      }
+      // Mic is started at START time — just toggle mute state here
       updateHostMicUI();
     });
   }
@@ -597,20 +755,132 @@
     }
   };
 
+  // ── Participant panel ─────────────────────────────
+  // LANG_FLAGS is declared once in the first script block (single source for
+  // flags, the host-lang-select options, and this panel)
+
+  function renderParticipants(participants) {
+    var list    = document.getElementById('active-participants-list');
+    var noPart  = document.getElementById('active-no-participants');
+    var countEl = document.getElementById('active-guest-count');
+    var listenerLine = document.getElementById('active-listener-line');
+    if (!list) return;
+
+    var myId = MeetLingoRealtime.getMyId();
+    var others = participants.filter(function(p) { return p.id !== myId; });
+    var listeners = others.filter(function(p) { return p.role === 'listener'; });
+    var listenerCount = listeners.length;
+
+    if (countEl) countEl.textContent = listenerCount;
+    if (listenerLine) listenerLine.textContent = listenerCount + ' listener' + (listenerCount !== 1 ? 's' : '');
+
+    // Setup view: counter + language breakdown (event-driven, replaces REST polling)
+    var gc = document.getElementById('guest-count');
+    if (gc) gc.textContent = listenerCount;
+    renderLangBreakdown(listeners);
+
+    if (others.length === 0) {
+      list.innerHTML = '<p id="active-no-participants" style="color:#aaa;font-size:14px;font-style:italic;text-align:center;padding:20px;">No listeners yet</p>';
+      return;
+    }
+    if (noPart) noPart.style.display = 'none';
+    list.innerHTML = others.map(function(p) {
+      var flag    = LANG_FLAGS[p.lang] || '🌐';
+      var isSpeaking = p.speaking;
+      var isMuted    = p.muted;
+      var bgColor    = isSpeaking ? '#F0F9D8' : 'transparent';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #F5F5F5;background:' + bgColor + '">'
+        + '<span style="font-size:18px;">' + flag + '</span>'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-size:14px;font-weight:600;color:#1a1c1c;display:flex;align-items:center;gap:6px;">'
+        + escapeHtml(p.name)
+        + (isSpeaking ? '<span style="display:inline-block;width:7px;height:7px;background:#95C11E;border-radius:50%;animation:live-dot 1.2s infinite;"></span>' : '')
+        + '</div>'
+        + '<div style="font-size:12px;color:#888;">' + escapeHtml(p.lang) + ' · ' + escapeHtml(p.role) + '</div>'
+        + '</div>'
+        + '<button onclick="MeetLingoRealtime.muteParticipant(\'' + escapeHtml(p.id) + '\')" style="border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;background:' + (isMuted ? '#FEE2E2' : '#F5F5F5') + ';color:' + (isMuted ? '#991B1B' : '#555') + ';">'
+        + (isMuted ? 'Unmute' : 'Mute')
+        + '</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  // Server only sends the full list on join/leave/name/lang changes;
+  // speaking state is applied locally from speaker_active/_inactive events.
+  var _lastParticipants = [];
+
+  window.onMLParticipants = function(participants) {
+    _lastParticipants = participants;
+    renderParticipants(participants);
+  };
+
+  function _setSpeaking(id, speaking) {
+    var changed = false;
+    _lastParticipants.forEach(function(p) {
+      if (p.id === id && p.speaking !== speaking) { p.speaking = speaking; changed = true; }
+    });
+    if (changed) renderParticipants(_lastParticipants);
+  }
+
+  window.onMLSpeakerActive = function(id, name, lang) {
+    var pill     = document.getElementById('active-speaking-pill');
+    var nameSpan = document.getElementById('active-speaking-name');
+    if (pill)     pill.style.display = 'flex';
+    if (nameSpan) nameSpan.textContent = name + ' (' + lang + ')';
+    _setSpeaking(id, true);
+  };
+  window.onMLSpeakerInactive = function(id) {
+    var pill = document.getElementById('active-speaking-pill');
+    if (pill) pill.style.display = 'none';
+    _setSpeaking(id, false);
+  };
+
+  // Source transcript from listeners (show in transcript panel with name)
+  window.onMLSourceTranscript = function(text, name, lang, speakerId) {
+    var box = document.getElementById('active-transcript');
+    var ph  = document.getElementById('active-placeholder');
+    if (!box) return;
+    if (ph) ph.style.display = 'none';
+    var key = '_src_' + speakerId;
+    var existing = document.getElementById(key);
+    var row;
+    if (existing) {
+      existing.textContent += text;
+      row = existing;
+    } else {
+      row = document.createElement('p');
+      row.id = key;
+      row.style.cssText = 'font-size:13px;color:#4b6400;padding:4px 0;border-bottom:1px solid #f5f5f5;margin:0;';
+      row.textContent = '[' + name + ' (' + lang + ')] ' + text;
+      box.appendChild(row);
+    }
+    // Reset finalize timer on every delta so an utterance isn't split mid-word
+    if (!window._srcRowTimers) window._srcRowTimers = {};
+    clearTimeout(window._srcRowTimers[key]);
+    window._srcRowTimers[key] = setTimeout(function() { row.id = ''; delete window._srcRowTimers[key]; }, 3000);
+    box.scrollTop = box.scrollHeight;
+  };
+
   // ── Live transcript (from Realtime API via WS) ────
-  var _txEntries = [];
+  var _liveHostBubble = null;
+  var _liveHostText   = '';
+  var _liveHostTimer  = null;
   window.onMLTranscript = function(text) {
     if (!text || !text.trim()) return;
     var box = document.getElementById('active-transcript');
     var ph  = document.getElementById('active-placeholder');
     if (!box) return;
     if (ph) ph.style.display = 'none';
-    _txEntries.push(text);
-    if (_txEntries.length > 30) _txEntries.shift();
-    box.innerHTML = _txEntries.map(function(t) {
-      return '<p style="font-size:14px;color:#1a1c1c;padding:3px 0;border-bottom:1px solid #f5f5f5;margin:0;">' + t.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>';
-    }).join('');
+    _liveHostText += text;
+    if (!_liveHostBubble) {
+      _liveHostBubble = document.createElement('p');
+      _liveHostBubble.style.cssText = 'font-size:14px;color:#1a1c1c;padding:3px 0;border-bottom:1px solid #f5f5f5;margin:0;';
+      box.appendChild(_liveHostBubble);
+    }
+    _liveHostBubble.textContent = _liveHostText;
     box.scrollTop = box.scrollHeight;
+    clearTimeout(_liveHostTimer);
+    _liveHostTimer = setTimeout(function() { _liveHostBubble = null; _liveHostText = ''; }, 2500);
   };
 
   // ── WS error toast ────────────────────────────────
@@ -623,6 +893,38 @@
     window._toastTimer = setTimeout(function() { toast.style.opacity = '0'; }, 4000);
   }
   window.onMLError = showHostError;
+
+  // ── Active-view agenda editing (live update to guests) ──
+  (function() {
+    var input = document.getElementById('active-agenda-input');
+    var btn   = document.getElementById('active-agenda-save');
+    var label = document.getElementById('active-agenda-saved');
+    if (!input || !btn) return;
+    // Prefill with the agenda from the setup view
+    input.value = localStorage.getItem('meetlingo_agenda') || '';
+    btn.addEventListener('click', function() {
+      var text = input.value;
+      localStorage.setItem('meetlingo_agenda', text);
+      var setupInput = document.getElementById('agenda-input');
+      if (setupInput) setupInput.value = text;
+      fetch('/api/agenda', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agenda: text })
+      }).then(function() {
+        if (label) {
+          label.style.opacity = '1';
+          setTimeout(function() { label.style.opacity = '0'; }, 1500);
+        }
+      });
+    });
+  })();
+
+  // Unlock AudioContext on first user gesture (Safari autoplay policy)
+  document.addEventListener('click', function _unlock() {
+    MeetLingoRealtime.unlockAudio();
+    document.removeEventListener('click', _unlock);
+  }, { once: true });
 
   // Connect WS on host page load (mic starts only on first unmute)
   MeetLingoRealtime.connect();

@@ -218,7 +218,7 @@
             var data = await res.json();
             if (data.success) {
                 window.mlLeaveOk = true;
-                window.location.href = 'preferences.html';
+                window.location.href = 'name.html';
             } else {
                 errEl.textContent = data.error || 'Incorrect code. Please try again.';
                 errEl.style.display = 'block';

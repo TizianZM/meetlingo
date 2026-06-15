@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Your Name - MeetLingo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "primary": "#4b6400", "on-primary": "#ffffff", "primary-fixed": "#c4f351",
+          "surface": "#f9f9f9", "on-surface": "#1a1c1c", "surface-container": "#eeeeee",
+          "on-surface-variant": "#4f453a", "surface-variant": "#e2e2e2",
+          "outline-variant": "#d3c4b6", "background": "#f9f9f9"
+        },
+        "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+        "spacing": { "lg": "48px", "xs": "4px", "margin-mobile": "16px", "sm": "12px", "base": "8px", "md": "24px", "xl": "80px", "gutter": "24px" },
+        "fontFamily": { "headline-lg-mobile": ["Source Sans 3"], "body-md": ["Source Sans 3"], "headline-md": ["Source Sans 3"] },
+        "fontSize": {
+          "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+          "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+          "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  body { font-family: 'Source Sans 3', sans-serif; min-height: max(884px, 100dvh); }
+</style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
+
+<!-- TopAppBar -->
+<header class="w-full h-[56px] sticky top-0 bg-white border-b border-[#EEEEEE] z-50">
+  <div class="relative flex items-center justify-between w-full h-full px-4 max-w-5xl mx-auto">
+    <button class="flex items-center justify-center w-10 h-10 hover:opacity-70 transition-opacity" id="back-arrow">
+      <span class="material-symbols-outlined" style="color:#555555;">arrow_back</span>
+    </button>
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-baseline gap-[4px] cursor-pointer select-none" data-ml-logo>
+      <span style="color:#95C11E;font-size:18px;font-weight:700;">MeetLingo</span>
+      <span style="color:#A77F4E;font-size:11px;font-weight:400;">by ZIMM</span>
+    </div>
+    <div class="w-10"></div>
+  </div>
+</header>
+
+<!-- Main -->
+<main class="flex-grow flex flex-col items-center justify-center px-4 pb-8">
+  <div class="w-full max-w-sm">
+    <!-- Icon -->
+    <div class="flex justify-center mb-6">
+      <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background:#F0F9D8;">
+        <span class="material-symbols-outlined" style="color:#95C11E;font-size:32px;font-variation-settings:'FILL' 1;">person</span>
+      </div>
+    </div>
+
+    <!-- Heading -->
+    <h1 class="text-headline-lg-mobile text-on-surface font-semibold text-center mb-2" id="ml-name-heading">What's your first name?</h1>
+    <p class="text-body-md text-on-surface-variant text-center mb-8" id="ml-name-sub">So others can see who is speaking</p>
+
+    <!-- Input -->
+    <div class="relative mb-4">
+      <input
+        type="text"
+        id="ml-name-input"
+        autocomplete="given-name"
+        autocapitalize="words"
+        maxlength="20"
+        placeholder="Your first name"
+        class="w-full px-4 py-4 rounded-xl border-2 text-lg font-medium text-on-surface bg-white transition-all outline-none text-center"
+        style="border-color:#DDDDDD;font-family:'Source Sans 3',sans-serif;"
+      />
+    </div>
+
+    <!-- Continue button -->
+    <button
+      id="ml-name-btn"
+      class="w-full py-4 rounded-full font-semibold text-lg text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98]"
+      style="background:#95C11E;"
+    >CONTINUE <span class="material-symbols-outlined" style="font-size:20px;">arrow_forward</span></button>
+
+    <p class="text-center mt-4 text-sm text-on-surface-variant" id="ml-name-error" style="display:none;color:#ba1a1a;"></p>
+  </div>
+</main>
+
+<!-- Decorative background -->
+<div class="fixed inset-0 -z-10 pointer-events-none opacity-[0.03]">
+  <svg height="100%" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <defs><pattern height="40" id="grid" patternunits="userSpaceOnUse" width="40">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" stroke-width="1"/>
+    </pattern></defs>
+    <rect fill="url(#grid)" height="100%" width="100%"/>
+  </svg>
+</div>
+
+<script>
+  var input = document.getElementById('ml-name-input');
+  var btn   = document.getElementById('ml-name-btn');
+  var err   = document.getElementById('ml-name-error');
+
+  // Pre-fill if already saved
+  var saved = localStorage.getItem('meetlingo_name');
+  if (saved) input.value = saved;
+
+  // Focus styling
+  input.addEventListener('focus', function() { this.style.borderColor = '#95C11E'; });
+  input.addEventListener('blur',  function() { this.style.borderColor = '#DDDDDD'; });
+
+  function proceed() {
+    var name = input.value.trim();
+    if (!name) {
+      err.textContent = 'Please enter your name.';
+      err.style.display = 'block';
+      input.style.borderColor = '#ba1a1a';
+      input.focus();
+      return;
+    }
+    err.style.display = 'none';
+    localStorage.setItem('meetlingo_name', name);
+    window.mlLeaveOk = true;
+    window.location.href = 'preferences.html';
+  }
+
+  btn.addEventListener('click', proceed);
+  input.addEventListener('keydown', function(e) { if (e.key === 'Enter') proceed(); });
+
+  document.getElementById('back-arrow').addEventListener('click', function() {
+    window.mlLeaveOk = true;
+    window.location.href = 'verify.html';
+  });
+</script>
+<script src="/js/ui-lang.js"></script>
+<script>
+  mlWireLogoToHome();
+  mlWireBeforeUnload();
+  mlApply('name');
+</script>
+</body></html>

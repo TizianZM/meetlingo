@@ -4,6 +4,11 @@
 
 var ML_UI = {
   English: {
+    // name.html
+    name_heading:    "What's your first name?",
+    name_sub:        'So others can see who is speaking',
+    name_placeholder:'Your first name',
+    name_btn:        'CONTINUE',
     // login.html
     login_heading:   'Enter your email',
     login_sub:       "We'll send you a 6-digit code",
@@ -32,6 +37,10 @@ var ML_UI = {
     back_confirm:    'Leave this page?',
   },
   German: {
+    name_heading:    'Wie heißt du?',
+    name_sub:        'Damit andere sehen, wer spricht',
+    name_placeholder:'Dein Vorname',
+    name_btn:        'WEITER',
     login_heading:   'E-Mail eingeben',
     login_sub:       'Wir senden dir einen 6-stelligen Code',
     login_btn:       'CODE SENDEN',
@@ -55,6 +64,10 @@ var ML_UI = {
     back_confirm:    'Seite verlassen?',
   },
   Spanish: {
+    name_heading:    '¿Cómo te llamas?',
+    name_sub:        'Para que otros vean quién habla',
+    name_placeholder:'Tu nombre',
+    name_btn:        'CONTINUAR',
     login_heading:   'Ingresa tu correo',
     login_sub:       'Te enviaremos un código de 6 dígitos',
     login_btn:       'ENVIAR CÓDIGO',
@@ -78,6 +91,10 @@ var ML_UI = {
     back_confirm:    '¿Salir de esta página?',
   },
   French: {
+    name_heading:    'Quel est ton prénom ?',
+    name_sub:        'Pour que les autres voient qui parle',
+    name_placeholder:'Ton prénom',
+    name_btn:        'CONTINUER',
     login_heading:   'Entrez votre e-mail',
     login_sub:       'Nous vous enverrons un code à 6 chiffres',
     login_btn:       'ENVOYER LE CODE',
@@ -101,6 +118,10 @@ var ML_UI = {
     back_confirm:    'Quitter cette page ?',
   },
   Italian: {
+    name_heading:    'Come ti chiami?',
+    name_sub:        'Così gli altri vedono chi parla',
+    name_placeholder:'Il tuo nome',
+    name_btn:        'CONTINUA',
     login_heading:   'Inserisci la tua email',
     login_sub:       'Ti invieremo un codice a 6 cifre',
     login_btn:       'INVIA CODICE',
@@ -124,6 +145,10 @@ var ML_UI = {
     back_confirm:    'Lasciare questa pagina?',
   },
   Japanese: {
+    name_heading:    'お名前は？',
+    name_sub:        '誰が話しているかわかるように',
+    name_placeholder:'名前',
+    name_btn:        '続ける',
     login_heading:   'メールアドレスを入力',
     login_sub:       '6桁のコードをお送りします',
     login_btn:       'コードを送信',
@@ -147,6 +172,10 @@ var ML_UI = {
     back_confirm:    'このページを離れますか？',
   },
   Portuguese: {
+    name_heading:    'Qual é o seu nome?',
+    name_sub:        'Para que os outros vejam quem está falando',
+    name_placeholder:'Seu primeiro nome',
+    name_btn:        'CONTINUAR',
     login_heading:   'Digite seu e-mail',
     login_sub:       'Enviaremos um código de 6 dígitos',
     login_btn:       'ENVIAR CÓDIGO',
@@ -170,6 +199,10 @@ var ML_UI = {
     back_confirm:    'Sair desta página?',
   },
   Turkish: {
+    name_heading:    'Adınız ne?',
+    name_sub:        'Diğerleri kimin konuştuğunu görsün',
+    name_placeholder:'Adınız',
+    name_btn:        'DEVAM ET',
     login_heading:   'E-postanızı girin',
     login_sub:       'Size 6 haneli bir kod göndereceğiz',
     login_btn:       'KOD GÖNDER',
@@ -193,6 +226,10 @@ var ML_UI = {
     back_confirm:    'Bu sayfadan ayrılmak istiyor musunuz?',
   },
   Dutch: {
+    name_heading:    'Hoe heet je?',
+    name_sub:        'Zodat anderen zien wie er spreekt',
+    name_placeholder:'Je voornaam',
+    name_btn:        'VERDER',
     login_heading:   'Voer je e-mail in',
     login_sub:       'We sturen je een 6-cijferige code',
     login_btn:       'CODE VERSTUREN',
@@ -216,6 +253,10 @@ var ML_UI = {
     back_confirm:    'Deze pagina verlaten?',
   },
   Korean: {
+    name_heading:    '이름이 무엇인가요?',
+    name_sub:        '다른 사람들이 누가 말하는지 알 수 있게요',
+    name_placeholder:'이름',
+    name_btn:        '계속',
     login_heading:   '이메일을 입력하세요',
     login_sub:       '6자리 코드를 보내드립니다',
     login_btn:       '코드 전송',
@@ -239,6 +280,10 @@ var ML_UI = {
     back_confirm:    '이 페이지를 나가시겠습니까?',
   },
   Chinese: {
+    name_heading:    '你叫什么名字？',
+    name_sub:        '让其他人知道谁在说话',
+    name_placeholder:'你的名字',
+    name_btn:        '继续',
     login_heading:   '输入您的电子邮件',
     login_sub:       '我们将发送一个6位验证码',
     login_btn:       '发送验证码',
@@ -262,6 +307,10 @@ var ML_UI = {
     back_confirm:    '确定离开此页面？',
   },
   Arabic: {
+    name_heading:    'ما اسمك؟',
+    name_sub:        'حتى يرى الآخرون من يتحدث',
+    name_placeholder:'اسمك الأول',
+    name_btn:        'متابعة',
     login_heading:   'أدخل بريدك الإلكتروني',
     login_sub:       'سنرسل لك رمزاً من 6 أرقام',
     login_btn:       'إرسال الرمز',
@@ -285,6 +334,10 @@ var ML_UI = {
     back_confirm:    'هل تريد مغادرة هذه الصفحة؟',
   },
   Russian: {
+    name_heading:    'Как тебя зовут?',
+    name_sub:        'Чтобы другие видели, кто говорит',
+    name_placeholder:'Твоё имя',
+    name_btn:        'ПРОДОЛЖИТЬ',
     login_heading:   'Введите ваш email',
     login_sub:       'Мы отправим вам код из 6 цифр',
     login_btn:       'ОТПРАВИТЬ КОД',
@@ -308,6 +361,10 @@ var ML_UI = {
     back_confirm:    'Покинуть эту страницу?',
   },
   Polish: {
+    name_heading:    'Jak masz na imię?',
+    name_sub:        'Żeby inni widzieli, kto mówi',
+    name_placeholder:'Twoje imię',
+    name_btn:        'DALEJ',
     login_heading:   'Wpisz swój e-mail',
     login_sub:       'Wyślemy ci kod 6-cyfrowy',
     login_btn:       'WYŚLIJ KOD',
@@ -331,6 +388,10 @@ var ML_UI = {
     back_confirm:    'Opuścić tę stronę?',
   },
   Swedish: {
+    name_heading:    'Vad heter du?',
+    name_sub:        'Så att andra ser vem som pratar',
+    name_placeholder:'Ditt förnamn',
+    name_btn:        'FORTSÄTT',
     login_heading:   'Ange din e-post',
     login_sub:       'Vi skickar en 6-siffrig kod',
     login_btn:       'SKICKA KOD',
@@ -354,6 +415,10 @@ var ML_UI = {
     back_confirm:    'Lämna den här sidan?',
   },
   Hindi: {
+    name_heading:    'आपका नाम क्या है?',
+    name_sub:        'ताकि दूसरों को पता चले कौन बोल रहा है',
+    name_placeholder:'आपका नाम',
+    name_btn:        'जारी रखें',
     login_heading:   'अपना ईमेल दर्ज करें',
     login_sub:       'हम आपको 6 अंकों का कोड भेजेंगे',
     login_btn:       'कोड भेजें',
@@ -377,6 +442,10 @@ var ML_UI = {
     back_confirm:    'इस पेज को छोड़ें?',
   },
   Greek: {
+    name_heading:    'Πώς σε λένε;',
+    name_sub:        'Για να βλέπουν οι άλλοι ποιος μιλάει',
+    name_placeholder:'Το όνομά σου',
+    name_btn:        'ΣΥΝΕΧΕΙΑ',
     login_heading:   'Εισάγετε το email σας',
     login_sub:       'Θα σας στείλουμε έναν κωδικό 6 ψηφίων',
     login_btn:       'ΑΠΟΣΤΟΛΗ ΚΩΔΙΚΟΥ',
@@ -400,6 +469,10 @@ var ML_UI = {
     back_confirm:    'Έξοδος από αυτή τη σελίδα;',
   },
   Ukrainian: {
+    name_heading:    "Як тебе звати?",
+    name_sub:        'Щоб інші бачили, хто говорить',
+    name_placeholder:"Твоє ім'я",
+    name_btn:        'ПРОДОВЖИТИ',
     login_heading:   'Введіть вашу електронну пошту',
     login_sub:       'Ми надішлемо вам код з 6 цифр',
     login_btn:       'НАДІСЛАТИ КОД',
@@ -458,10 +531,17 @@ function mlWireBeforeUnload() {
 }
 
 // ── Apply translations to a given page ───────────────────────────
-// pageKey: 'login' | 'verify' | 'preferences' | 'ended'
+// pageKey: 'name' | 'login' | 'verify' | 'preferences' | 'ended'
 function mlApply(pageKey) {
   var t = mlT();
   var $ = function(id) { return document.getElementById(id); };
+
+  if (pageKey === 'name') {
+    var h = $('ml-name-heading');    if (h) h.textContent = t.name_heading || "What's your name?";
+    var s = $('ml-name-sub');        if (s) s.textContent = t.name_sub || 'So others can see who is speaking';
+    var i = $('ml-name-input');      if (i) i.placeholder = t.name_placeholder || 'Your first name';
+    var b = $('ml-name-btn');        if (b) b.childNodes[0].textContent = (t.name_btn || 'CONTINUE') + ' ';
+  }
 
   if (pageKey === 'login') {
     var h = $('ml-login-heading');   if (h) h.textContent = t.login_heading;
