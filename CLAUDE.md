@@ -1,16 +1,17 @@
 # MeetLingo — Technical Memory
-_Zuletzt aktualisiert: Mai 2026_
+_Zuletzt aktualisiert: Juni 2026_
 
 ---
 
 ## Architecture
 
 ### Stack
-- **server.js** — Node.js + Express (REST only, kein WebSocket)
-- **public/js/translation.js** — Browser-seitige Aufnahme + API calls
-- **public/js/audio.js** — AudioContext helpers (nicht mehr für Translation genutzt)
-- **public/js/ui-lang.js** — Geteilte UI-Übersetzungen für alle Onboarding/Post-Meeting Seiten
-- **OpenAI API** — Whisper + GPT-4o-mini + TTS-1
+- **server.js** — Node.js + Express **+ `ws` WebSocket-Server** (`/ws/meeting`). Express dient nur noch für Hilfs-REST-Endpoints; die gesamte Audio-/Translation-Pipeline läuft über WebSocket.
+- **public/js/realtime.js** — Browser-WebSocket-Client (bidirektional): Mic-Capture, PCM16-Upload, gapless Audio-Playback, Sprach-/Namens-Wechsel.
+- **public/js/waveform.js** — `AnalyserNode`-basierte Balken-Visualisierung (`MeetLingoWaveform.start/stop`).
+- **public/js/audio.js** — **veraltet/ungenutzt.** Playback läuft jetzt in realtime.js. Nicht mehr in host.html/meeting.html eingebunden.
+- **public/js/ui-lang.js** — Geteilte UI-Übersetzungen für alle Onboarding/Post-Meeting Seiten.
+- **OpenAI Realtime Translations API** — `wss://api.openai.com/v1/realtime/translations?model=gpt-realtime-translate` (Speech-to-Speech). Zusätzlich `gpt-4o-mini` für Text-Übersetzung (Agenda/UI).
 
 ### Seiten-Übersicht
 
@@ -18,93 +19,109 @@ _Zuletzt aktualisiert: Mai 2026_
 |-------|-------|
 | `index.html` | Startseite — Sprachauswahl (Flag-Grid) |
 | `login.html` | E-Mail eingeben |
-| `verify.html` | 6-stelligen Code eingeben |
+| `verify.html` | 6-stelligen Code eingeben (Server bypassed → immer gültig) |
+| `name.html` | Name-Onboarding (setzt `meetlingo_name`) |
 | `preferences.html` | Zielsprache + Lautstärke wählen, dann START LISTENING |
 | `waiting.html` | Listener-Wartescreen bis Host gestartet hat |
-| `meeting.html` | Listener-Meetingscreen (Translation läuft) |
-| `host.html` | Host-Screen (Mic, Agenda, Timer, START/END) |
+| `meeting.html` | Listener-Meetingscreen (Translation läuft, kann auch selbst sprechen) |
+| `host.html` | Host-Screen (Mic, Agenda, Timer, Teilnehmer, START/END) |
 | `ended.html` | Post-Meeting Bewertung + E-Mail-Summary |
 | `confirmation.html` | Host-Bestätigungsscreen nach END |
 
 ---
 
-## Translation Pipeline (aktuelle Architektur — Host-Broadcast)
+## Translation Pipeline (WebSocket — bidirektional)
 
-### Konzept: Host-Mic → Server → alle Listener-Sprachen parallel
-**NICHT** die OpenAI Realtime API — diese hat bei diesem Account andere Modellnamen.
-Listener haben **kein Mikrofon** — nur der Host nimmt auf.
+### Konzept: Jeder Teilnehmer kann sprechen
+**NICHT** mehr REST-Polling. **NICHT** die OpenAI Chat-Realtime API — sondern die **Realtime _Translations_** API.
+Jeder verbundene Client (Host **und** Listener) kann Mic aktivieren und sprechen. Routing nach Zielsprache:
 
 ```
-HOST Mic → PCM16 chunks → WAV → POST /api/host-translate
-  → Whisper (transkribiert einmalig)
-  → res.json({ success, original }) sofort zurück an Host
-  → dann parallel für jede registrierte Listener-Sprache:
-       GPT-4o-mini (übersetzt) → TTS-1 voice:alloy (MP3)
-       → Push { id, lang, audio } in audioQueue (in-memory)
+SPEAKER Mic → PCM16 24kHz chunks → binary WS frame → server
+  server Silence-Gate (peak > 300, 1200ms Hangover) verwirft Stille
+  → für jede ANDERE Zielsprache unter den Teilnehmern:
+       translateSession "${speakerId}_${targetLang}" (OpenAI WS)
+       → session.output_audio.delta (PCM16 24kHz) → WAV → broadcast an targetLang
+       → session.output_transcript.delta → broadcast an targetLang
+       → session.input_transcript.delta → source_transcript an alle außer Speaker
+  → Teilnehmer mit GLEICHER Sprache: Audio direkt durchgereicht (keine Übersetzung)
 
-LISTENER pollt GET /api/listener-poll?lang=Spanish&after=42
-  → bekommt neue { id, audio } chunks
-  → AudioManager.playBase64Audio(chunk) spielt ab (sequentiell)
+LISTENER/CLIENT empfängt { type:'audio', audio } → realtime.js _scheduleChunk()
+  → gapless geplant via decodeAudioData (24kHz AudioContext)
 ```
 
-### Ablauf beim Meeting-Start
-1. `host.html` lädt → `localStorage.removeItem('meetlingo_meeting_active')` + `POST /api/reset-session`
-2. Listener lädt `meeting.html` → `POST /api/listener-register { lang }`
-3. Host drückt START → `startTranslation()` + `meetlingo_meeting_active = 'true'`
-4. Host spricht → chunks → `/api/host-translate` → audioQueue befüllt
-5. Listener pollt jede Sekunde → empfängt + spielt Audio ab
+### Translate-Session-Lifecycle (server.js)
+- `translateSessions: "${speakerId}_${targetLang}" → { ws, active, pending[], ... }`
+- Lazy erstellt beim ersten Audio-Chunk für eine neue Zielsprache (`openTranslateSession`).
+- **Handshake-Buffering:** Chunks die während `session.created`→`session.updated` ankommen werden in `pending[]` gepuffert (max 100 ≈ 17s) und nach `session.updated` geflusht → erste Worte gehen nicht verloren.
+- **Auto-Recovery:** Bei `error`/`close`/`ws error` wird die Session aus der Map entfernt → nächster Chunk öffnet transparent eine neue. Late-close evictet keine neu geöffnete Session (Identitäts-Check `translateSessions.get(key) === session`).
+- **Pruning:** `pruneOrphanedSessions()` schließt Sessions, deren Zielsprache keine Zuhörer mehr hat (bei lang_change / disconnect). `closeSpeakerSessions(id)` bei Disconnect. `closeAllTranslateSessions()` bei Meeting-Ende.
+
+### Silence-Gate (server, binary handler)
+```js
+// Always-on Mic streamt sonst Stille → OpenAI-Input-Buffer wächst → Translation stallt.
+// readInt16LE (NICHT Int16Array-View — ws-Buffer können unaligned sein → throw bei odd offset)
+if (peak > 300) speaker.lastLoud = now;            // ~1% full scale
+if (!speaker.lastLoud || now - speaker.lastLoud > 1200) return;  // 1.2s Hangover
+```
+
+### WS-Nachrichtenprotokoll
+**Client → Server (JSON):** `join {lang,role,name}`, `lang_change {lang}`, `name_change {name}`, `mute_participant {targetId}` (nur Host), `meeting_end`, `ping`. **Binary frame:** roher PCM16 24kHz.
+**Server → Client (JSON):** `joined {id,active,startTime}`, `audio {audio}`, `transcript {text}`, `source_transcript {text,name,lang,speakerId}`, `speaker_active/_inactive`, `participant_list`, `participant_left`, `agenda_update`, `meeting_started`, `meeting_ended`, `pong`, `error`.
+
+### REST-Endpoints (server.js, Hilfsfunktionen)
+```js
+POST /api/send-code, /api/verify-code   → Auth gebypassed (immer success)
+POST /api/agenda { agenda }             → setzt meetingAgenda + broadcast agenda_update (live an Gäste)
+GET  /api/agenda                        → { agenda }
+POST /api/meeting-start                 → meetingActive=true, startTime, broadcast meeting_started
+POST /api/meeting-end                   → meetingActive=false, closeAllTranslateSessions, broadcast meeting_ended
+GET  /api/meeting-status                → { active, startTime }   ← autoritativ für Host-Reload-Recovery
+GET  /api/meeting-time                  → { startTime }
+POST /api/translate-text { text, targetLanguage } → gpt-4o-mini, Text-only (Agenda/UI)
+GET  /api/listener-stats                → { counts, total } aus wsParticipants
+// Legacy (no-op, Kompatibilität): /api/reset-session, /api/listener-register,
+//                                  /api/listener-poll, /api/send-summary-email
+```
 
 ### window.ML_HOST_MODE Flag
 ```js
-// host.html setzt VOR translation.js:
-window.ML_HOST_MODE = true;
-
-// translation.js entscheidet:
-const endpoint = window.ML_HOST_MODE ? '/api/host-translate' : '/api/translate';
+// host.html setzt VOR realtime.js:  window.ML_HOST_MODE = true;
+// realtime.js: role = ML_HOST_MODE ? 'host' : 'listener'
+//              langKey = ML_HOST_MODE ? 'meetlingo_host_lang' : 'meetlingo_lang'
+//   → Host-Sprache kontaminiert nicht die Listener-Prefs im selben Browser
 ```
 
-### Wichtige Parameter in translation.js
-```js
-const SILENCE_THRESHOLD = 0.015;  // Lautstärke-Grenze für Sprache
-const SILENCE_DURATION  = 600;    // ms Stille bevor gesendet wird
-processor = audioContext.createScriptProcessor(2048, 1, 1);
-audioContext = new AudioContext({ sampleRate: 16000 });
+### realtime.js — Public API (`window.MeetLingoRealtime`)
 ```
-
-### server.js Endpoints (vollständig)
-```js
-// POST /api/reset-session → löscht registeredLangs, audioQueue, nextChunkId
-// POST /api/listener-register { lang } → fügt Sprache zu registeredLangs hinzu
-// GET  /api/listener-poll?lang=X&after=N → gibt Chunks zurück (id > N, lang === X)
-// POST /api/host-translate { audio } → Whisper + parallel GPT+TTS für jede Sprache
-// POST /api/translate { audio, targetLanguage } → Whisper+GPT+TTS für einen Listener (Legacy)
-// POST /api/translate-text { text, targetLanguage } → Text-only Übersetzung (Agenda + UI)
-
-// WICHTIG: stream.path = 'audio.wav' muss gesetzt sein für Whisper
-// WICHTIG: audioQueue hat max 200 Einträge (FIFO), dann älteste entfernen
+connect, startMic(onGranted,onDenied), setMuted, isMuted, setLang, setName,
+endMeeting, muteParticipant, disconnect, setVolume, unlockAudio,
+getInputAnalyser, getOutputAnalyser, getMyId
 ```
+Window-Callbacks die Seiten setzen: `onMLConnected, onMLTranscript, onMLSourceTranscript,
+onMLSpeakerActive/Inactive, onMLParticipants, onMLParticipantLeft, onMLAgendaUpdate,
+onMLMeetingStarted/Ended, onMLAudioActivity, onMLError`.
 
-### audio.js — playBase64Audio (für Listener)
+### Audio-Parameter (realtime.js)
 ```js
-// Plays MP3 audio (TTS-1 output) via decodeAudioData
-// Verwendet AudioManager.playBase64Audio(base64) — sequentiell geplant
-// AudioContext: 24kHz (audio.js), decodeAudioData resampled automatisch
-// NICHT playPcm16Chunk() — das ist für raw PCM16 (Realtime API, nicht verwendet)
+AudioContext({ sampleRate: 24000 })      // OpenAI Realtime Translations = 24kHz
+createScriptProcessor(4096, 1, 1)
+// Resample-Fallback wenn ctx.sampleRate ≠ 24000 (alte Browser ignorieren die Option)
+// Float32 → PCM16 mit 2x Gain
+// Silence-Gate-Schwelle clientseitig für Waveform/Activity: vol > 0.01
+// Gapless: _nextPlayAt, _MAX_BUFFER_AHEAD = 3.0s, _activeSources[] (stop bei lang_change)
 ```
 
 ### Script-Reihenfolge
 ```html
 <!-- host.html -->
 <script>window.ML_HOST_MODE = true;</script>
-<script src="/js/audio.js"></script>
-<script src="/js/translation.js"></script>
+<script src="/js/realtime.js"></script>
+<script src="/js/waveform.js"></script>
 
-<!-- meeting.html (Listener) — KEIN translation.js, KEIN Mikrofon -->
-<script src="/js/audio.js"></script>
-<script>
-  // AudioManager.playBase64Audio(chunk) für Playback
-  // fetch('/api/listener-poll?lang=...&after=...') jede Sekunde
-</script>
+<!-- meeting.html (Listener — kann ebenfalls sprechen) -->
+<script src="/js/realtime.js"></script>
+<script src="/js/waveform.js"></script>
 ```
 
 ---
@@ -119,7 +136,7 @@ Dieser Account hat **andere Modellnamen** als Standard-OpenAI:
 | `gpt-realtime-translate` | `gpt-4o-realtime-preview-2024-10-01` ❌ |
 | `gpt-realtime-mini` | `gpt-4o-mini-realtime-preview` ❌ |
 
-Realtime API aufgegeben weil: verhält sich wie Chatbot, sendet kein Audio, falsche Event-Namen.
+Die **Chat-Realtime** API wurde aufgegeben (verhielt sich wie Chatbot, sendete kein Audio). Die aktuelle Pipeline nutzt die **Translations**-Variante (`/v1/realtime/translations`) — diese liefert echtes übersetztes Audio + Transcripts.
 
 ---
 
@@ -127,55 +144,74 @@ Realtime API aufgegeben weil: verhält sich wie Chatbot, sendet kein Audio, fals
 
 | Key | Inhalt | Gesetzt von |
 |-----|--------|-------------|
-| `meetlingo_lang` | Zielsprache z.B. `"Spanish"` | index.html, preferences.html |
+| `meetlingo_lang` | Listener-Zielsprache z.B. `"Spanish"` | index.html, preferences.html |
+| `meetlingo_host_lang` | Host-Sprechsprache (getrennt von Listener!) | realtime.js (ML_HOST_MODE) |
+| `meetlingo_name` | Anzeigename des Teilnehmers | name.html, realtime.js setName |
 | `meetlingo_volume` | Lautstärke 0–100 (Integer) | preferences.html |
-| `meetlingo_meeting_start` | Timestamp `Date.now()` bei Host-Start | host.html `startTimer()` |
-| `meetlingo_meeting_end` | Timestamp `Date.now()` bei Host-End | host.html END-Button |
-| `meetlingo_meeting_active` | `'true'` wenn Meeting läuft, wird gelöscht bei END | host.html |
-| `meetlingo_agenda` | Agenda-Text vom Host (manuell gespeichert) | host.html Save-Button |
+| `meetlingo_meeting_start` | Timestamp bei Host-Start | host.html `startTimer()` |
+| `meetlingo_meeting_end` | Timestamp bei Host-End | host.html END-Button |
+| `meetlingo_meeting_active` | `'true'` wenn Meeting läuft, gelöscht bei END | host.html |
+| `meetlingo_agenda` | Agenda-Text vom Host | host.html Save-Button |
 | `meetlingo_email` | E-Mail-Adresse des Listeners | login.html |
 | `meetlingo_rating` | Sterne-Bewertung 1–5 | ended.html |
+| `meetlingo_summary` | Meeting-Summary-Text | ended.html / host summary |
 
-### WICHTIG: meetlingo_meeting_active
-- `meetlingo_meeting_start` bleibt nach jedem Meeting in localStorage → **NICHT** als "läuft gerade"-Check verwenden
-- Stattdessen `meetlingo_meeting_active === 'true'` prüfen
-- Wird beim START gesetzt, beim END gelöscht
+### Timer / „läuft gerade"
+- **Autoritativ ist der Server:** `joined`-Message + `GET /api/meeting-status` liefern `{ active, startTime }`. Host-Reload-Recovery basiert darauf (nicht mehr auf unconditional cleanup).
+- `meetlingo_meeting_start` bleibt nach Meetings in localStorage → **NICHT** als „läuft gerade"-Check verwenden. Stattdessen `meetlingo_meeting_active === 'true'` bzw. Server-Status.
+- meeting.html setzt `meetlingo_meeting_start` **NICHT** selbst (sonst Zeitverlust) — liest nur Server-`startTime`.
 
 ---
 
 ## Meeting-Flow (Listener)
 
 ```
-index.html → login.html → verify.html → preferences.html
-  → [meetlingo_meeting_active === 'true'?]
-       JA  → meeting.html (Timer synced mit Host)
-       NEIN → waiting.html (pollt jede Sekunde, redirect wenn active=true)
+index.html → login.html → verify.html → name.html → preferences.html
+  → [Server meeting-status active?]
+       JA  → meeting.html (Timer synced mit Server-startTime)
+       NEIN → waiting.html (pollt, redirect wenn active)
 ```
 
 ## Meeting-Flow (Host)
 
 ```
-host.html → START → setzt meetlingo_meeting_start + meetlingo_meeting_active='true'
-          → END   → setzt meetlingo_meeting_end, entfernt meetlingo_meeting_active
+host.html → START → POST /api/meeting-start, meetlingo_meeting_active='true', startMic()
+          → END   → POST /api/meeting-end (oder WS meeting_end), entfernt meetlingo_meeting_active
           → confirmation.html
 ```
 
 ---
 
-## Timer-Synchronisation
+## host.html — Zwei Views (Setup + Active)
 
-- **Host** setzt `meetlingo_meeting_start = Date.now()` beim START
-- **Listener** (meeting.html) liest `meetlingo_meeting_start` und rechnet `elapsed = Date.now() - start`
-- meeting.html setzt `meetlingo_meeting_start` **NICHT** mehr selbst — sonst Zeitverlust
-- Beide Timer zeigen identische verstrichene Zeit
-
-```js
-// meeting.html — RICHTIG:
-var start = parseInt(localStorage.getItem('meetlingo_meeting_start') || Date.now());
-
-// meeting.html — FALSCH (entfernt!):
-// localStorage.setItem('meetlingo_meeting_start', Date.now().toString()); ← NIE WIEDER
 ```
+host-setup-view  → sichtbar beim Laden (Agenda, Stats, QR)
+host-active-view → sichtbar nach START (Teilnehmer-Panel, Mute, Transcription, Waveforms)
+```
+
+Bei START (direkt im user-gesture chain — Mic-Permission!):
+```js
+document.getElementById('host-setup-view').style.display = 'none';
+document.getElementById('host-active-view').style.display = 'flex';
+MeetLingoRealtime.startMic(...);  // synchron aus dem Click heraus
+```
+
+---
+
+## Features (aktueller Stand)
+
+- **Bidirektionale Übersetzung** — jeder Teilnehmer kann sprechen, gleiche Sprache wird direkt durchgereicht.
+- **Live-Waveforms** — Host + Listener, Input-/Output-`AnalyserNode` via waveform.js.
+- **Teilnehmer-Panel** — `participant_list`, Speaking-Highlight (`speaker_active/_inactive`), Namen.
+- **Host-Mute** — nur Host darf andere muten (`mute_participant`), Listener sieht Banner.
+- **Live-Agenda** — In-Meeting-Bearbeitung wird via `agenda_update` an alle Gäste gepusht.
+- **Name-Onboarding** — name.html, server-seitig sanitisiert.
+
+## Sicherheit / Hardening (server.js)
+- `sanitizeLang()` (Whitelist aus LANG_CODES → sonst English), `sanitizeName()` (entfernt `<>&"'`, max 40 Zeichen).
+- Mute auf Host-Rolle beschränkt.
+- HTML-Escaping der Teilnehmernamen.
+- `.env` (OpenAI API Key) **NIEMALS** committen; muss in `.gitignore`.
 
 ---
 
@@ -186,116 +222,50 @@ Alle Seiten übernehmen die Sprache aus `localStorage.meetlingo_lang`.
 **Unterstützte Sprachen:**
 English, German, Spanish, French, Italian, Japanese, Portuguese, Turkish, Dutch, Korean, Chinese, Arabic, Russian, Polish, Swedish, Hindi, Greek, Ukrainian
 
+`LANG_CODES` in server.js mappt diese auf ISO-Codes (en, de, es, …) für die OpenAI-Session (`output.language`).
+
 ### ui-lang.js — Funktionen
 ```js
 mlGetLang()        // → aktuell gewählte Sprache
 mlT()              // → Translations-Objekt für aktuelle Sprache
-mlApply(pageKey)   // → setzt alle UI-Texte auf der Seite ('login'|'verify'|'preferences'|'ended')
+mlApply(pageKey)   // → setzt alle UI-Texte ('login'|'verify'|'preferences'|'ended'|…)
 mlWireLogoToHome() // → Logo-Click → index.html (setzt mlLeaveOk=true)
 mlWireBeforeUnload()// → beforeunload-Warning bei unbeabsichtigtem Refresh
 ```
 
-### Jede Seite lädt ui-lang.js und ruft auf:
-```html
-<script src="/js/ui-lang.js"></script>
-<script>
-  mlWireLogoToHome();
-  mlWireBeforeUnload();
-  mlApply('preferences'); // pageKey je nach Seite
-</script>
-```
-
-### Agenda-Übersetzung (meeting.html)
+### Agenda-Übersetzung
 - `agendaCache[lang]` → verhindert doppelte API-Calls
-- `translateAgenda(lang)` → ruft `/api/translate-text` auf wenn lang ≠ 'English'
-- Wird aufgerufen aus `applyUILanguage()` bei Sprachwechsel
+- `translateAgenda(lang)` → `/api/translate-text` wenn lang ≠ 'English'
 
 ---
 
 ## preferences.html — Sprachkarten
 
 **Top 6 (immer sichtbar):** English → German → Spanish → French → Italian → Japanese
-
-**Weitere 12 (via "More languages" Toggle):**
-Portuguese, Turkish, Dutch, Korean, Chinese, Arabic, Russian, Polish, Swedish, Hindi, Greek, Ukrainian
+**Weitere 12 (via "More languages" Toggle):** Portuguese, Turkish, Dutch, Korean, Chinese, Arabic, Russian, Polish, Swedish, Hindi, Greek, Ukrainian
 
 ```js
 window.moreLangsOpen = false;  // auf window, damit mlApply darauf zugreift
-// Toggle expandiert/klappt das zweite Grid ein
 // Auto-expand wenn gespeicherte Sprache in der Extended-Liste ist
 // Karten-Click → localStorage.setItem('meetlingo_lang', lang) + mlApply('preferences')
 ```
 
 ---
 
-## host.html — Agenda
-
-- Textarea `id="agenda-input"` — Host tippt Agenda
-- **Expliziter Save-Button** (`id="agenda-save-btn"`) → `localStorage.setItem('meetlingo_agenda', ...)`
-- "Saved ✓" Label (`id="agenda-saved-label"`) blendet kurz ein
-- Kein Auto-Save mehr — Host bestimmt wann Gäste die Agenda sehen
-
----
-
-## Navigationsmuster
-
-```js
-// Vor jeder intentionalen Navigation:
-window.mlLeaveOk = true;
-window.location.href = 'ziel.html';
-
-// In meeting.html:
-var intentionalLeave = false;
-function doLeave() {
-  intentionalLeave = true;
-  // stopTranslation, setze meetlingo_meeting_end, navigate
-}
-window.addEventListener('beforeunload', e => {
-  if (!intentionalLeave) { e.preventDefault(); e.returnValue = ''; }
-});
-```
-
----
-
 ## Safari-spezifische Bugs
 
-- **Kein `let` doppelt** über Script-Dateien hinweg → SyntaxError
-  - `isMuted` → umbenannt zu `_muteBtnState` in meeting.html
-- **Buffer → String**: `ws` Library gibt Buffer zurück → `.toString()` nötig
-- **AudioContext sampleRate**: Browser 48kHz, OpenAI braucht 16kHz → `new AudioContext({ sampleRate: 16000 })`
+- **AudioContext aus User-Gesture:** Erstellung/`resume()` muss **synchron** im Click-Handler passieren (nicht im getUserMedia-`.then()`), sonst ist die Geste weg und `resume()` failt.
+- **AudioContext Auto-Recovery:** `onstatechange` → bei `suspended`/`interrupted` automatisch `resume()`. Mic-Aktivierung/Unmute/Sprachwechsel kann den Context sonst killen → Playback stirbt.
+- **`ws`-Buffer unaligned:** `readInt16LE(i*2)` statt `Int16Array`-View (typed-array-Konstruktor wirft bei odd offset).
+- **Buffer → String:** `raw.toString()` vor `JSON.parse` bei OpenAI-WS-Messages.
+- **Kein `let` doppelt** über Script-Dateien hinweg → SyntaxError.
 
 ---
 
 ## Lautstärke-System
 
-- `localStorage.meetlingo_volume` → Integer 0–100
-- `playBase64Audio()` normalisiert: `if (vol > 1) vol = vol / 100`
-- Standard: 50
-
----
-
-## host.html — Zwei Views (Setup + Active)
-
-```
-host-setup-view  → sichtbar beim Laden (Agenda, Stats, QR)
-host-active-view → sichtbar nach START (Listeners-Count, Mute, Transcription)
-```
-
-Bei START:
-```js
-document.getElementById('host-setup-view').style.display = 'none';
-document.getElementById('host-active-view').style.display = 'flex';
-startTranslation(); // ← direkt im user-gesture chain (kein navigate!)
-```
-
-Mic-Pulse Animation beim Sprechen:
-```js
-window.onAudioActivity = function() {
-  btn.classList.add('mic-active');  // CSS: animation: mic-pulse 1s infinite
-  clearTimeout(_pulseTimeout);
-  _pulseTimeout = setTimeout(() => btn.classList.remove('mic-active'), 800);
-};
-```
+- `localStorage.meetlingo_volume` → Integer 0–100, Standard 50
+- realtime.js `_scheduleChunk` normalisiert: `if (vol > 1) vol = vol / 100`
 
 ---
 
@@ -303,13 +273,11 @@ window.onAudioActivity = function() {
 
 ```bash
 cd ~/Documents/MEETLINGO
-npm start
-# → http://localhost:3000
+npm start          # → http://localhost:3000
 ```
 
 ## Nach Code-Änderungen
-
-- **Nur JS/HTML geändert**: CMD+R in Safari (kein Server-Neustart nötig)
+- **Nur JS/HTML geändert**: CMD+R im Browser (kein Server-Neustart nötig)
 - **server.js geändert**: CTRL+C → npm start → CMD+R
 
 ---
@@ -329,7 +297,7 @@ npm start
 
 ---
 
-## Sicherheit
+## Test-Script
 
-- `.env` enthält echten OpenAI API Key → **NIEMALS in Git committen**
-- `.gitignore` muss `.env` enthalten
+`test-audio-pipeline.js` (untracked) — End-to-End-Test: sendet echtes PCM16 (440Hz-Sinus) per WebSocket an `/ws/meeting`, prüft Audio-/Text-Translation-Responses.
+**Hinweis:** referenziert `/api/force-translate`, das aktuell **nicht** in server.js existiert — Test ggf. anpassen oder Endpoint ergänzen.

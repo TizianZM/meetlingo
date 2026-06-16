@@ -132,7 +132,7 @@
       // Read lang/name at open-time so any pre-connect UI changes (name input, lang select) are captured.
       // Host uses its own key so the spoken language never contaminates listener prefs in the same browser.
       var lang = localStorage.getItem(_langKey()) || 'English';
-      var name = localStorage.getItem('meetlingo_name') || '';
+      var name = localStorage.getItem(_nameKey()) || '';
       console.log('[Realtime] WS connected');
       clearTimeout(_reconnectTimer);
       _ws.send(JSON.stringify({ type: 'join', lang: lang, role: role, name: name }));
@@ -307,6 +307,12 @@
     return window.ML_HOST_MODE ? 'meetlingo_host_lang' : 'meetlingo_lang';
   }
 
+  // Separate host vs listener name so the two roles don't overwrite each other's
+  // identity when the same browser is used for both (mirrors _langKey).
+  function _nameKey() {
+    return window.ML_HOST_MODE ? 'meetlingo_host_name' : 'meetlingo_name';
+  }
+
   function setLang(lang) {
     localStorage.setItem(_langKey(), lang);
     if (_ws && _ws.readyState === WebSocket.OPEN) {
@@ -319,7 +325,7 @@
   }
 
   function setName(name) {
-    localStorage.setItem('meetlingo_name', name);
+    localStorage.setItem(_nameKey(), name);
     if (_ws && _ws.readyState === WebSocket.OPEN) {
       _ws.send(JSON.stringify({ type: 'name_change', name: name }));
     }

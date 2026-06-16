@@ -386,6 +386,12 @@
 
     var sessionStarted = false;
     var timerInterval  = null;
+    // _micLive: true once getUserMedia + AudioContext are actually running.
+    // Browsers block both without a user gesture, so a mid-meeting RELOAD can
+    // land in the live view with the mic NOT yet live — the mic button's first
+    // tap then re-acquires it (see hostEnableMic). Declared here so both script
+    // blocks (START handler / recovery / mute button) share one source of truth.
+    var _micLive = false;
 
     // ── Refs ──────────────────────────────────────
     var actionBtn   = document.getElementById('main-action-btn');
@@ -470,6 +476,7 @@
                         function() {
                             // Mic granted → go live immediately
                             sessionStarted = true;
+                            _micLive = true;
                             startTimer();
                             fetch('/api/meeting-start', { method: 'POST' });
                             _activeMuted = false;
@@ -546,26 +553,26 @@
                 if (durationEl) durationEl.textContent = text;
             }, 1000);
             _micEverStarted = true;
-            MeetLingoRealtime.startMic(function() {
-                _activeMuted = false;
-                MeetLingoRealtime.setMuted(false);
-                document.getElementById('host-setup-view').style.display = 'none';
-                document.getElementById('host-active-view').style.display = 'flex';
-                actionBtn.style.backgroundColor = '#FF4444';
-                actionIcon.textContent = 'call_end';
-                actionLabel.textContent = 'END MEETING';
-                updateHostMicUI();
-                setTimeout(function() {
-                    var inCanvas  = document.getElementById('host-input-wave');
-                    var outCanvas = document.getElementById('host-output-wave');
-                    var inA  = MeetLingoRealtime.getInputAnalyser();
-                    var outA = MeetLingoRealtime.getOutputAnalyser();
-                    if (inA  && inCanvas)  MeetLingoWaveform.start(inCanvas,  inA,  '#95C11E');
-                    if (outA && outCanvas) MeetLingoWaveform.start(outCanvas, outA, '#4B9FFF');
-                }, 200);
-            }, function() {
-                showHostError('Meeting is live — press START to re-enable your microphone.');
-            });
+            // Enter the live view IMMEDIATELY — never gate it on the mic. After
+            // a programmatic reload there is no user gesture, so the browser may
+            // refuse to start the AudioContext/mic; gating the view on that left
+            // the host stranded on the setup screen with a misleading START
+            // button (which, with sessionStarted=true, fired "End Meeting?").
+            document.getElementById('host-setup-view').style.display = 'none';
+            document.getElementById('host-active-view').style.display = 'flex';
+            actionBtn.style.backgroundColor = '#FF4444';
+            actionIcon.textContent = 'call_end';
+            actionLabel.textContent = 'END MEETING';
+            _activeMuted = true;
+            _micLive = false;
+            updateHostMicUI();
+            // Deliberately DON'T auto-start the mic here. After a programmatic
+            // reload there's no user gesture, so getUserMedia may resolve while
+            // AudioContext.resume() silently fails — leaving the UI on "Live"
+            // with no audio actually flowing. Prompting the host to tap the mic
+            // button guarantees the context resumes inside a real gesture
+            // (hostEnableMic).
+            showHostError('Meeting resumed — tap the mic button to re-enable your microphone.');
         }).catch(function() {});
     })();
 
@@ -620,7 +627,9 @@
     (function() {
         var nameInput = document.getElementById('host-name-input');
         if (!nameInput) return;
-        var saved = localStorage.getItem('meetlingo_name');
+        // Host-specific key so a listener name from the same browser doesn't
+        // pre-fill the presenter field (mirrors meetlingo_host_lang).
+        var saved = localStorage.getItem('meetlingo_host_name');
         if (saved) nameInput.value = saved;
         nameInput.addEventListener('input', function() {
             var name = nameInput.value.trim() || 'Host';
@@ -725,6 +734,14 @@
   var _micEverStarted  = false;
 
   function updateHostMicUI() {
+    if (!_micLive) {
+      // Mic not yet acquired (e.g. right after a mid-meeting reload) — invite
+      // the host to tap, which re-acquires it inside a user gesture.
+      _activeMuteBtn.style.background = '#888';
+      _activeMuteIcon.textContent     = 'mic_off';
+      _activeMuteLabel.textContent    = 'Tap to resume';
+      return;
+    }
     if (_activeMuted) {
       _activeMuteBtn.style.background = '#888';
       _activeMuteIcon.textContent     = 'mic_off';
@@ -736,11 +753,39 @@
     }
   }
 
+  // Start the input/output waveform visualizers (mic live, AudioContext running)
+  function hostStartWaveforms() {
+    setTimeout(function() {
+      var inCanvas  = document.getElementById('host-input-wave');
+      var outCanvas = document.getElementById('host-output-wave');
+      var inA  = MeetLingoRealtime.getInputAnalyser();
+      var outA = MeetLingoRealtime.getOutputAnalyser();
+      if (inA  && inCanvas)  MeetLingoWaveform.start(inCanvas,  inA,  '#95C11E');
+      if (outA && outCanvas) MeetLingoWaveform.start(outCanvas, outA, '#4B9FFF');
+    }, 200);
+  }
+
+  // Re-acquire the mic from within a user gesture (mic-button tap). Used after a
+  // reload-recovery where the browser refused to auto-start the mic.
+  function hostEnableMic() {
+    MeetLingoRealtime.startMic(function() {
+      _micLive = true;
+      _activeMuted = false;
+      MeetLingoRealtime.setMuted(false);
+      updateHostMicUI();
+      hostStartWaveforms();
+    }, function() {
+      showHostError('Microphone blocked — allow mic access in browser settings, then try again.');
+    });
+  }
+
   if (_activeMuteBtn) {
     _activeMuteBtn.addEventListener('click', function() {
+      // First tap after a reload-recovery acquires the mic (browsers require a
+      // gesture); afterwards the button just toggles mute.
+      if (!_micLive) { hostEnableMic(); return; }
       _activeMuted = !_activeMuted;
       MeetLingoRealtime.setMuted(_activeMuted);
-      // Mic is started at START time — just toggle mute state here
       updateHostMicUI();
     });
   }
