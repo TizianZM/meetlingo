@@ -133,9 +133,14 @@
       // Host uses its own key so the spoken language never contaminates listener prefs in the same browser.
       var lang = localStorage.getItem(_langKey()) || 'English';
       var name = localStorage.getItem(_nameKey()) || '';
+      var room = localStorage.getItem('meetlingo_room') || '';
       console.log('[Realtime] WS connected');
       clearTimeout(_reconnectTimer);
-      _ws.send(JSON.stringify({ type: 'join', lang: lang, role: role, name: name }));
+      var payload = { type: 'join', lang: lang, role: role, name: name, room: room };
+      // Host proves its identity with the secret token issued at room creation;
+      // without a matching token the server downgrades it to a listener.
+      if (role === 'host') payload.hostToken = localStorage.getItem('meetlingo_host_token') || '';
+      _ws.send(JSON.stringify(payload));
     };
 
     _ws.onmessage = function (evt) {
@@ -146,11 +151,17 @@
           _myId = msg.id;
           if (typeof window.onMLConnected === 'function') window.onMLConnected(msg);
         }
+        else if (msg.type === 'room_not_found') {
+          _closing = true;                 // don't auto-reconnect into a dead room
+          if (typeof window.onMLRoomNotFound === 'function') window.onMLRoomNotFound();
+        }
         else if (msg.type === 'audio') {
           _scheduleChunk(msg.audio);
         }
         else if (msg.type === 'transcript') {
-          if (typeof window.onMLTranscript === 'function') window.onMLTranscript(msg.text);
+          if (typeof window.onMLTranscript === 'function') {
+            window.onMLTranscript(msg.text, msg.speakerId, msg.name, msg.sourceLang);
+          }
         }
         else if (msg.type === 'source_transcript') {
           if (typeof window.onMLSourceTranscript === 'function') {

@@ -184,15 +184,11 @@
         });
     });
 
-    // START LISTENING → check if host has started, else show waiting screen
+    // START LISTENING → waiting room checks the room's status on the server
+    // and forwards into the meeting immediately if it's already live.
     document.getElementById('start-btn').addEventListener('click', () => {
         window.mlLeaveOk = true;
-        var meetingActive = localStorage.getItem('meetlingo_meeting_active') === 'true';
-        if (meetingActive) {
-            window.location.href = 'meeting.html';
-        } else {
-            window.location.href = 'waiting.html';
-        }
+        window.location.href = 'waiting.html';
     });
 
     // ── Timer: Meeting noch nicht gestartet → --:-- ──

@@ -213,15 +213,15 @@
     </div>
   </div>
 
-  <!-- Live transcript panel -->
+  <!-- Conversation (shared chat — same design as the listener view) -->
   <div style="background:#fff;border:1px solid #eee;border-radius:12px;width:100%;overflow:hidden;">
     <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fafafa;border-bottom:1px solid #f0f0f0;">
-      <span class="material-symbols-outlined" style="color:#95C11E;font-size:18px;">transcribe</span>
-      <span style="font-size:13px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.07em;">Live Transcription</span>
-      <span id="active-rec-dot" style="margin-left:auto;font-size:13px;color:#95C11E;font-weight:600;">● Rec</span>
+      <span class="material-symbols-outlined" style="color:#95C11E;font-size:18px;">forum</span>
+      <span style="font-size:13px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.07em;">Conversation</span>
+      <span id="active-rec-dot" style="margin-left:auto;font-size:13px;color:#95C11E;font-weight:600;">● Live</span>
     </div>
-    <div id="active-transcript" style="padding:12px 16px;min-height:220px;max-height:45vh;overflow-y:auto;">
-      <p id="active-placeholder" style="color:#aaa;font-size:14px;font-style:italic;">Start speaking...</p>
+    <div id="active-transcript" style="padding:14px 16px;min-height:220px;max-height:45vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;background:#FAFAFA;">
+      <p id="active-placeholder" class="ml-chat-empty" style="color:#999;font-size:15px;font-style:italic;text-align:center;margin:auto;">Waiting for guests to speak…</p>
     </div>
   </div>
 
@@ -332,7 +332,10 @@
 
     <!-- ── QR CODE CARD ── -->
     <div class="w-full bg-white border border-surface-container rounded-xl p-6 flex flex-col items-center shadow-sm">
-        <h2 class="text-label-md uppercase tracking-widest text-tertiary font-bold mb-4">Share Meeting QR</h2>
+        <h2 class="text-label-md uppercase tracking-widest text-tertiary font-bold mb-2">Share Meeting</h2>
+        <!-- Meeting code: guests can type this on the join screen -->
+        <p class="text-caption text-tertiary uppercase tracking-widest mb-1">Meeting code</p>
+        <div id="host-room-code" style="font-size:30px;font-weight:800;letter-spacing:.2em;color:#1a1c1c;margin-bottom:14px;font-family:'Source Sans 3',sans-serif;">······</div>
         <!-- Real QR code rendered here by qrcode.js -->
         <div id="qr-container" class="mb-3 flex items-center justify-center" style="width:160px;height:160px;"></div>
         <p style="font-size:14px;color:#555;margin-bottom:8px;">Guests scan this to join</p>
@@ -392,6 +395,34 @@
     // tap then re-acquires it (see hostEnableMic). Declared here so both script
     // blocks (START handler / recovery / mute button) share one source of truth.
     var _micLive = false;
+
+    // ── Meeting room bootstrap ──────────────────────────
+    // The host owns a room (short code + secret token). Reuse the stored room
+    // if the server still has it; otherwise create a fresh one. The secret
+    // token gates host-only actions (start/end/mute/agenda) on the server.
+    // QR, WebSocket connect and reload-recovery all wait on window._roomReady.
+    var ML_ROOM       = localStorage.getItem('meetlingo_room') || '';
+    var ML_HOST_TOKEN = localStorage.getItem('meetlingo_host_token') || '';
+    function roomBody(extra) { return Object.assign({ room: ML_ROOM, hostToken: ML_HOST_TOKEN }, extra || {}); }
+    window._roomReady = (function() {
+        function makeRoom() {
+            return fetch('/api/create-room', { method: 'POST' })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    ML_ROOM = d.room; ML_HOST_TOKEN = d.hostToken;
+                    localStorage.setItem('meetlingo_room', ML_ROOM);
+                    localStorage.setItem('meetlingo_host_token', ML_HOST_TOKEN);
+                    console.log('[Host] Created room', ML_ROOM);
+                });
+        }
+        if (ML_ROOM && ML_HOST_TOKEN) {
+            return fetch('/api/meeting-status?room=' + encodeURIComponent(ML_ROOM))
+                .then(function(r) { return r.json(); })
+                .then(function(d) { if (!d.exists) return makeRoom(); })
+                .catch(makeRoom);
+        }
+        return makeRoom();
+    })();
 
     // ── Refs ──────────────────────────────────────
     var actionBtn   = document.getElementById('main-action-btn');
@@ -466,7 +497,7 @@
                         fetch('/api/agenda', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ agenda: agendaText })
+                            body: JSON.stringify(roomBody({ agenda: agendaText }))
                         });
                     }
 
@@ -478,7 +509,7 @@
                             sessionStarted = true;
                             _micLive = true;
                             startTimer();
-                            fetch('/api/meeting-start', { method: 'POST' });
+                            fetch('/api/meeting-start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(roomBody()) });
                             _activeMuted = false;
                             MeetLingoRealtime.setMuted(false);
                             document.getElementById('host-setup-view').style.display = 'none';
@@ -515,7 +546,7 @@
                     localStorage.setItem('meetlingo_meeting_end', Date.now().toString());
                     localStorage.removeItem('meetlingo_meeting_active');
                     MeetLingoRealtime.endMeeting();     // WS broadcast to all listeners
-                    fetch('/api/meeting-end', { method: 'POST' }); // REST fallback
+                    fetch('/api/meeting-end', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(roomBody()) }); // REST fallback
                     MeetLingoRealtime.disconnect();
                     window.location.href = 'confirmation.html';
                 }
@@ -528,14 +559,13 @@
     // it's shared across tabs and cleared on END). On every host load:
     //   • server meeting active  → resume into the live view (restart mic)
     //   • server meeting inactive → clear stale local flags + reset session
-    (function() {
-        fetch('/api/meeting-status').then(function(r) { return r.json(); }).then(function(d) {
+    window._roomReady.then(function() {
+        fetch('/api/meeting-status?room=' + encodeURIComponent(ML_ROOM)).then(function(r) { return r.json(); }).then(function(d) {
             if (!d.active) {
                 // Fresh start — clear leftovers from a previous meeting
                 localStorage.removeItem('meetlingo_meeting_active');
                 localStorage.removeItem('meetlingo_meeting_start');
                 localStorage.removeItem('meetlingo_meeting_end');
-                fetch('/api/reset-session', { method: 'POST' });
                 return;
             }
             sessionStarted = true;
@@ -574,7 +604,7 @@
             // (hostEnableMic).
             showHostError('Meeting resumed — tap the mic button to re-enable your microphone.');
         }).catch(function() {});
-    })();
+    });
 
     // ── Mic-Knopf: Mute/Unmute während Session ───
 
@@ -666,12 +696,14 @@
         var saved = localStorage.getItem('meetlingo_agenda');
         if (saved) {
             input.value = saved;
-            // Auto-restore to server (handles server restarts — server is in-memory only)
-            fetch('/api/agenda', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ agenda: saved })
-            }).catch(function() {});
+            // Auto-restore to server once the room exists (server is in-memory only)
+            window._roomReady.then(function() {
+                fetch('/api/agenda', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(roomBody({ agenda: saved }))
+                }).catch(function() {});
+            });
         }
 
         function doSave() {
@@ -680,7 +712,7 @@
             fetch('/api/agenda', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ agenda: input.value })
+                body: JSON.stringify(roomBody({ agenda: input.value }))
             }).catch(function(e) { console.warn('[Agenda] Save to server failed:', e); });
             savedLabel.style.opacity = '1';
             setTimeout(function() { savedLabel.style.opacity = '0'; }, 1500);
@@ -694,17 +726,21 @@
 <!-- QR Code library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-  (function() {
-    var meetingUrl = window.location.origin;
+  window._roomReady.then(function() {
+    var meetingUrl = window.location.origin + '/?room=' + ML_ROOM;
     var container  = document.getElementById('qr-container');
     var urlLabel   = document.getElementById('qr-url');
     var localHint  = document.getElementById('qr-local-hint');
+    var codeEl     = document.getElementById('host-room-code');
+
+    if (codeEl) codeEl.textContent = ML_ROOM;
 
     // Show warning if running locally
     var isLocal = meetingUrl.includes('localhost') || meetingUrl.includes('127.0.0.1');
     if (isLocal && localHint) localHint.style.display = 'block';
 
     if (container && typeof QRCode !== 'undefined') {
+      container.innerHTML = '';
       new QRCode(container, {
         text:         meetingUrl,
         width:        160,
@@ -715,7 +751,7 @@
       });
     }
     if (urlLabel) urlLabel.textContent = meetingUrl;
-  })();
+  });
 </script>
 
 <!-- Error toast -->
@@ -725,6 +761,7 @@
 <script>window.ML_HOST_MODE = true;</script>
 <script src="/js/realtime.js"></script>
 <script src="/js/waveform.js"></script>
+<script src="/js/chat.js"></script>
 <script>
   // ── Active view: mute toggle ──────────────────────
   var _activeMuted = true; // default: muted
@@ -880,52 +917,16 @@
     _setSpeaking(id, false);
   };
 
-  // Source transcript from listeners (show in transcript panel with name)
-  window.onMLSourceTranscript = function(text, name, lang, speakerId) {
-    var box = document.getElementById('active-transcript');
-    var ph  = document.getElementById('active-placeholder');
-    if (!box) return;
-    if (ph) ph.style.display = 'none';
-    var key = '_src_' + speakerId;
-    var existing = document.getElementById(key);
-    var row;
-    if (existing) {
-      existing.textContent += text;
-      row = existing;
-    } else {
-      row = document.createElement('p');
-      row.id = key;
-      row.style.cssText = 'font-size:13px;color:#4b6400;padding:4px 0;border-bottom:1px solid #f5f5f5;margin:0;';
-      row.textContent = '[' + name + ' (' + lang + ')] ' + text;
-      box.appendChild(row);
-    }
-    // Reset finalize timer on every delta so an utterance isn't split mid-word
-    if (!window._srcRowTimers) window._srcRowTimers = {};
-    clearTimeout(window._srcRowTimers[key]);
-    window._srcRowTimers[key] = setTimeout(function() { row.id = ''; delete window._srcRowTimers[key]; }, 3000);
-    box.scrollTop = box.scrollHeight;
-  };
+  // ── Conversation: shared chat renderer (same as listener view) ──
+  // Each guest turn becomes one card: Name + language, the original speech,
+  // and below it the translation into the host's language.
+  MeetLingoChat.init(document.getElementById('active-transcript'), { emptyText: 'Waiting for guests to speak…' });
 
-  // ── Live transcript (from Realtime API via WS) ────
-  var _liveHostBubble = null;
-  var _liveHostText   = '';
-  var _liveHostTimer  = null;
-  window.onMLTranscript = function(text) {
-    if (!text || !text.trim()) return;
-    var box = document.getElementById('active-transcript');
-    var ph  = document.getElementById('active-placeholder');
-    if (!box) return;
-    if (ph) ph.style.display = 'none';
-    _liveHostText += text;
-    if (!_liveHostBubble) {
-      _liveHostBubble = document.createElement('p');
-      _liveHostBubble.style.cssText = 'font-size:14px;color:#1a1c1c;padding:3px 0;border-bottom:1px solid #f5f5f5;margin:0;';
-      box.appendChild(_liveHostBubble);
-    }
-    _liveHostBubble.textContent = _liveHostText;
-    box.scrollTop = box.scrollHeight;
-    clearTimeout(_liveHostTimer);
-    _liveHostTimer = setTimeout(function() { _liveHostBubble = null; _liveHostText = ''; }, 2500);
+  window.onMLSourceTranscript = function(text, name, lang, speakerId) {
+    MeetLingoChat.addSource(speakerId, name, lang, text);
+  };
+  window.onMLTranscript = function(text, speakerId, name, sourceLang) {
+    MeetLingoChat.addTranslation(speakerId, name, sourceLang, text);
   };
 
   // ── WS error toast ────────────────────────────────
@@ -955,7 +956,7 @@
       fetch('/api/agenda', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agenda: text })
+        body: JSON.stringify(roomBody({ agenda: text }))
       }).then(function() {
         if (label) {
           label.style.opacity = '1';
@@ -971,8 +972,23 @@
     document.removeEventListener('click', _unlock);
   }, { once: true });
 
-  // Connect WS on host page load (mic starts only on first unmute)
-  MeetLingoRealtime.connect();
+  // If the host's room vanished server-side (restart) while connecting, make a
+  // fresh one and reconnect — so the host is never stuck on a dead room.
+  window.onMLRoomNotFound = function() {
+    fetch('/api/create-room', { method: 'POST' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        ML_ROOM = d.room; ML_HOST_TOKEN = d.hostToken;
+        localStorage.setItem('meetlingo_room', ML_ROOM);
+        localStorage.setItem('meetlingo_host_token', ML_HOST_TOKEN);
+        var codeEl = document.getElementById('host-room-code');
+        if (codeEl) codeEl.textContent = ML_ROOM;
+        MeetLingoRealtime.connect();
+      });
+  };
+
+  // Connect WS once the room is ready (mic starts only on first unmute)
+  window._roomReady.then(function() { MeetLingoRealtime.connect(); });
   updateHostMicUI();
 </script>
 </body></html>

@@ -148,6 +148,7 @@
 </div>
 
 <script src="/js/ui-lang.js"></script>
+<script src="/js/realtime.js"></script>
 <script>
   // ── Translations for this page ───────────────────────────────
   var WAIT_T = {
@@ -193,10 +194,24 @@
     window.location.href = 'preferences.html';
   });
 
+  // ── Join over WebSocket while waiting ─────────────────────────
+  // So the host's "Connected Guests" counter reflects people who have
+  // logged in but are still waiting for the meeting to start. The guest
+  // joins as a listener; when the host starts we get meeting_started and
+  // jump straight into the meeting (faster than the status poll below).
+  try { MeetLingoRealtime.connect(); } catch (e) {}
+  function gotoMeeting() { window.mlLeaveOk = true; window.location.href = 'meeting.html'; }
+  // The join ack tells us if the meeting is already live → jump in immediately.
+  window.onMLConnected     = function(msg) { if (msg && msg.active) gotoMeeting(); };
+  window.onMLMeetingStarted = gotoMeeting;
+  // Bad/expired code → back to the join screen.
+  window.onMLRoomNotFound  = function() { window.mlLeaveOk = true; window.location.href = 'index.html'; };
+
   // ── Poll server for meeting status every 1.5 seconds ──────────
   var pollInterval = setInterval(async function() {
     try {
-      var res  = await fetch('/api/meeting-status');
+      var room = localStorage.getItem('meetlingo_room') || '';
+      var res  = await fetch('/api/meeting-status?room=' + encodeURIComponent(room));
       var data = await res.json();
       if (data.active) {
         clearInterval(pollInterval);

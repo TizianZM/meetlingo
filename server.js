@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const crypto = require('crypto');
 const WebSocket = require('ws');
 require('dotenv').config();
 
@@ -18,57 +19,145 @@ function getOpenAI() {
   return new OpenAI({ apiKey: key });
 }
 
-// ── In-memory session state ───────────────────────────
-let meetingActive    = false;
-let meetingStartTime = null;
-let meetingAgenda    = '';
+// ── Rooms (one independent meeting each) ─────────────────────────────
+// Replaces the old single global meeting. Each room owns its own
+// participants, translate sessions, agenda and a secret host token that
+// gates host-only actions (start/end/mute/agenda).
+//
+// room = {
+//   code, hostToken, active, startTime, agenda,
+//   participants: Map(ws -> { id, name, lang, role, muted, speaking, isHost }),
+//   translateSessions: Map("speakerId_targetLang" -> session),
+//   speakerTimers: Map(speakerId -> timeout),
+//   lastActivity
+// }
+const rooms     = new Map();   // code -> room
+const wsToRoom  = new Map();   // ws -> code  (fast lookup on message/close)
+
+const ROOM_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous I/O/0/1
+function genRoomCode() {
+  let code;
+  do {
+    code = '';
+    for (let i = 0; i < 6; i++) code += ROOM_ALPHABET[crypto.randomInt(ROOM_ALPHABET.length)];
+  } while (rooms.has(code));
+  return code;
+}
+function createRoom() {
+  const room = {
+    code: genRoomCode(),
+    hostToken: crypto.randomBytes(24).toString('hex'),
+    active: false,
+    startTime: null,
+    agenda: '',
+    participants: new Map(),
+    translateSessions: new Map(),
+    speakerTimers: new Map(),
+    lastActivity: Date.now()
+  };
+  rooms.set(room.code, room);
+  return room;
+}
+function getRoom(code) {
+  return code ? rooms.get(String(code).trim().toUpperCase()) : null;
+}
+function isHostAuthed(room, token) {
+  return !!room && typeof token === 'string' && token.length > 0 &&
+         crypto.timingSafeEqual(Buffer.from(token), Buffer.from(room.hostToken));
+}
+// Tolerant equality for length-mismatched tokens (timingSafeEqual throws on
+// different lengths). Wraps isHostAuthed so a wrong-length token just fails.
+function hostOk(room, token) {
+  try { return isHostAuthed(room, token); } catch (e) { return false; }
+}
+
+// Drop empty rooms after a while so the map doesn't grow forever.
+const ROOM_TTL_MS = 1000 * 60 * 60; // 1h idle
+setInterval(() => {
+  const now = Date.now();
+  rooms.forEach((room, code) => {
+    if (room.participants.size === 0 && now - room.lastActivity > ROOM_TTL_MS) {
+      closeAllTranslateSessions(room);
+      rooms.delete(code);
+      console.log(`[Room] Reaped idle room ${code}`);
+    }
+  });
+}, 1000 * 60 * 10);
 
 // ── REST API ──────────────────────────────────────────
 app.post('/api/send-code', express.json(), (req, res) => {
-  console.log('[Auth] send-code → bypassed');
+  res.json({ success: true });
+});
+app.post('/api/verify-code', express.json(), (req, res) => {
   res.json({ success: true });
 });
 
-app.post('/api/verify-code', express.json(), (req, res) => {
-  console.log('[Auth] verify-code → always valid');
+// Post-meeting summary email — intentionally a no-op stub for now (the firm's
+// admin enables real sending later). Kept so ended.html doesn't 404.
+app.post('/api/send-summary-email', express.json(), (req, res) => {
   res.json({ success: true });
+});
+
+// Host creates a fresh room and receives the secret token. Anyone may create
+// a room (they only ever control the room they created, via this token).
+app.post('/api/create-room', (req, res) => {
+  const room = createRoom();
+  console.log(`[Room] Created ${room.code}`);
+  res.json({ success: true, room: room.code, hostToken: room.hostToken });
 });
 
 app.post('/api/agenda', express.json(), (req, res) => {
-  meetingAgenda = req.body.agenda || '';
-  // Push to connected guests so mid-meeting agenda edits appear live
-  broadcastAll({ type: 'agenda_update', agenda: meetingAgenda });
+  const room = getRoom(req.body.room);
+  if (!room || !hostOk(room, req.body.hostToken)) return res.status(403).json({ success: false, error: 'forbidden' });
+  room.agenda = req.body.agenda || '';
+  room.lastActivity = Date.now();
+  broadcastAll(room, { type: 'agenda_update', agenda: room.agenda });
   res.json({ success: true });
 });
 
 app.get('/api/agenda', (req, res) => {
-  res.json({ agenda: meetingAgenda });
+  const room = getRoom(req.query.room);
+  res.json({ agenda: room ? room.agenda : '' });
 });
 
 app.post('/api/meeting-start', express.json(), (req, res) => {
-  meetingActive    = true;
-  meetingStartTime = Date.now();
-  broadcastAll({ type: 'meeting_started' });
-  console.log('[Session] Meeting started');
+  const room = getRoom(req.body.room);
+  if (!room || !hostOk(room, req.body.hostToken)) return res.status(403).json({ success: false, error: 'forbidden' });
+  room.active = true;
+  room.startTime = Date.now();
+  room.lastActivity = Date.now();
+  broadcastAll(room, { type: 'meeting_started' });
+  console.log(`[Room ${room.code}] Meeting started`);
   res.json({ success: true });
 });
 
-app.post('/api/meeting-end', (req, res) => {
-  meetingActive = false;
-  closeAllTranslateSessions();
-  broadcastAll({ type: 'meeting_ended' });
-  console.log('[Session] Meeting ended');
+app.post('/api/meeting-end', express.json(), (req, res) => {
+  const room = getRoom(req.body.room);
+  if (!room || !hostOk(room, req.body.hostToken)) return res.status(403).json({ success: false, error: 'forbidden' });
+  room.active = false;
+  closeAllTranslateSessions(room);
+  broadcastAll(room, { type: 'meeting_ended' });
+  console.log(`[Room ${room.code}] Meeting ended`);
   res.json({ success: true });
 });
 
 app.get('/api/meeting-status', (req, res) => {
-  res.json({ active: meetingActive, startTime: meetingStartTime });
+  const room = getRoom(req.query.room);
+  if (!room) return res.json({ exists: false, active: false, startTime: null });
+  res.json({ exists: true, active: room.active, startTime: room.startTime });
 });
 
-app.get('/api/meeting-time', (req, res) => {
-  res.json({ startTime: meetingStartTime });
+app.get('/api/listener-stats', (req, res) => {
+  const room = getRoom(req.query.room);
+  const counts = {};
+  if (room) room.participants.forEach((p) => {
+    if (p.role === 'listener') counts[p.lang] = (counts[p.lang] || 0) + 1;
+  });
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  res.json({ counts, total });
 });
 
+// Stateless text translation (agenda + UI) — no room needed.
 app.post('/api/translate-text', express.json(), async (req, res) => {
   const { text, targetLanguage } = req.body;
   if (!text || !targetLanguage) return res.json({ success: false });
@@ -87,32 +176,8 @@ app.post('/api/translate-text', express.json(), async (req, res) => {
   }
 });
 
-app.get('/api/listener-stats', (req, res) => {
-  const counts = {};
-  wsParticipants.forEach((p) => {
-    if (p.role === 'listener') counts[p.lang] = (counts[p.lang] || 0) + 1;
-  });
-  const total = Object.values(counts).reduce((a, b) => a + b, 0);
-  res.json({ counts, total });
-});
-
-// Legacy endpoints (kept for compatibility)
-app.post('/api/reset-session', express.json(), (req, res) => { res.json({ success: true }); });
-app.post('/api/listener-register', express.json(), (req, res) => { res.json({ success: true, currentId: 0 }); });
-app.get('/api/listener-poll', (req, res) => { res.json({ chunks: [] }); });
-app.post('/api/send-summary-email', express.json(), (req, res) => { res.json({ success: true }); });
-
 // ── WebSocket ─────────────────────────────────────────
 const wss = new WebSocket.Server({ noServer: true });
-
-// wsParticipants: ws → { id, name, lang, role, muted, speaking, lastAudio }
-const wsParticipants = new Map();
-
-// translateSessions: "${speakerId}_${targetLang}" → { ws, active, speakerId, targetLang, sourceLang }
-const translateSessions = new Map();
-
-// Speaker debounce timers: speakerId → timeout
-const speakerTimers = new Map();
 
 server.on('upgrade', (req, socket, head) => {
   if (req.url === '/ws/meeting') {
@@ -135,7 +200,6 @@ const LANG_CODES = {
 function sanitizeLang(lang) {
   return LANG_CODES[lang] ? lang : 'English';
 }
-
 function sanitizeName(name, fallback) {
   const clean = String(name || '').replace(/[<>&"']/g, '').trim().slice(0, 40);
   return clean || fallback;
@@ -154,80 +218,66 @@ function buildWAV(pcmBuffer, sampleRate) {
   return buf;
 }
 
-function broadcastAll(msg) {
+// ── Per-room broadcast helpers ────────────────────────
+function broadcastAll(room, msg) {
   const str = JSON.stringify(msg);
-  wsParticipants.forEach((p, ws) => {
+  room.participants.forEach((p, ws) => {
     if (ws.readyState === WebSocket.OPEN) ws.send(str);
   });
 }
-
-function broadcastToLang(targetLang, msg, excludeSpeakerId) {
+function broadcastToLang(room, targetLang, msg, excludeSpeakerId) {
   const str = JSON.stringify(msg);
-  wsParticipants.forEach((p, ws) => {
+  room.participants.forEach((p, ws) => {
     if (p.lang === targetLang && ws.readyState === WebSocket.OPEN) {
       if (!excludeSpeakerId || p.id !== excludeSpeakerId) ws.send(str);
     }
   });
 }
-
-function broadcastToHost(msg) {
-  const str = JSON.stringify(msg);
-  wsParticipants.forEach((p, ws) => {
-    if (p.role === 'host' && ws.readyState === WebSocket.OPEN) ws.send(str);
-  });
-}
-
-function findParticipantById(id) {
-  for (const [, p] of wsParticipants) { if (p.id === id) return p; }
+function findParticipantById(room, id) {
+  for (const [, p] of room.participants) { if (p.id === id) return p; }
   return null;
 }
-
-function broadcastParticipantList() {
+function broadcastParticipantList(room) {
   const list = [];
-  wsParticipants.forEach((p) => {
+  room.participants.forEach((p) => {
     list.push({ id: p.id, name: p.name, lang: p.lang, role: p.role, muted: !!p.muted, speaking: !!p.speaking });
   });
-  broadcastAll({ type: 'participant_list', participants: list });
+  broadcastAll(room, { type: 'participant_list', participants: list });
 }
-
-function updateSpeakerActivity(speaker) {
+function updateSpeakerActivity(room, speaker) {
   if (!speaker.speaking) {
     speaker.speaking = true;
-    // Clients update their participant UI from speaker_active/_inactive —
-    // no full participant_list rebroadcast needed on every toggle
-    broadcastAll({ type: 'speaker_active', id: speaker.id, name: speaker.name, lang: speaker.lang });
+    broadcastAll(room, { type: 'speaker_active', id: speaker.id, name: speaker.name, lang: speaker.lang });
   }
-  clearTimeout(speakerTimers.get(speaker.id));
-  speakerTimers.set(speaker.id, setTimeout(() => {
+  clearTimeout(room.speakerTimers.get(speaker.id));
+  room.speakerTimers.set(speaker.id, setTimeout(() => {
     speaker.speaking = false;
-    speakerTimers.delete(speaker.id);
-    broadcastAll({ type: 'speaker_inactive', id: speaker.id });
+    room.speakerTimers.delete(speaker.id);
+    broadcastAll(room, { type: 'speaker_inactive', id: speaker.id });
   }, 1500));
 }
 
-// ── OpenAI Translate Session (per speaker × target lang) ──────────
-function openTranslateSession(speakerId, sourceLang, targetLang) {
+// ── OpenAI Translate Session (per room × speaker × target lang) ──────
+function openTranslateSession(room, speakerId, sourceLang, targetLang) {
   const key = `${speakerId}_${targetLang}`;
-  if (translateSessions.has(key)) return;
+  if (room.translateSessions.has(key)) return;
 
   const key_env = process.env.OPENAI_API_KEY;
   if (!key_env) { console.error('[Translate] Missing OPENAI_API_KEY'); return; }
 
   const langCode = LANG_CODES[targetLang] || 'en';
-  console.log(`[Translate] Opening: ${speakerId} (${sourceLang}) → ${targetLang} (${langCode})`);
+  console.log(`[Translate ${room.code}] Opening: ${speakerId} (${sourceLang}) → ${targetLang} (${langCode})`);
 
   const openaiWs = new WebSocket(
     `wss://api.openai.com/v1/realtime/translations?model=gpt-realtime-translate`,
     { headers: { 'Authorization': `Bearer ${key_env}` } }
   );
 
-  // pending: audio chunks that arrive while the OpenAI handshake is in flight —
-  // flushed on session.updated so the first words of speech aren't dropped
   const session = { ws: openaiWs, active: false, speakerId, sourceLang, targetLang, pending: [] };
-  translateSessions.set(key, session);
+  room.translateSessions.set(key, session);
 
   openaiWs.on('open', () => {
-    console.log(`[Translate] WS open: ${key}`);
+    console.log(`[Translate ${room.code}] WS open: ${key}`);
   });
 
   openaiWs.on('message', (raw) => {
@@ -245,171 +295,162 @@ function openTranslateSession(speakerId, sourceLang, targetLang) {
       }
       else if (evt.type === 'session.updated') {
         session.active = true;
-        // Flush audio buffered during the handshake
         session.pending.forEach((audioB64) => {
           openaiWs.send(JSON.stringify({ type: 'session.input_audio_buffer.append', audio: audioB64 }));
         });
         session.pending = [];
-        console.log(`[Translate] Ready: ${key}`);
+        console.log(`[Translate ${room.code}] Ready: ${key}`);
       }
       else if (evt.type === 'session.output_audio.delta' && evt.delta) {
-        if (!session.gotOutput) {
-          session.gotOutput = true;
-          console.log(`[Translate] First audio out: ${key}`);
-        }
         const pcm = Buffer.from(evt.delta, 'base64');
         const wav = buildWAV(pcm, 24000);
-        // Send to all participants with targetLang except the speaker themselves
-        broadcastToLang(targetLang, { type: 'audio', audio: wav.toString('base64') }, speakerId);
+        broadcastToLang(room, targetLang, { type: 'audio', audio: wav.toString('base64') }, speakerId);
       }
       else if (evt.type === 'session.output_transcript.delta' && evt.delta) {
-        broadcastToLang(targetLang, { type: 'transcript', text: evt.delta }, speakerId);
+        const sp = findParticipantById(room, speakerId);
+        broadcastToLang(room, targetLang, {
+          type: 'transcript', text: evt.delta,
+          speakerId, name: sp ? sp.name : '?', sourceLang: sp ? sp.lang : sourceLang
+        }, speakerId);
       }
       else if (evt.type === 'session.input_transcript.delta' && evt.delta) {
-        const sp = findParticipantById(speakerId);
-        const name = sp?.name || '?';
-        const lang = sp?.lang || sourceLang;
-        // Broadcast source text to everyone EXCEPT the speaker themselves
+        const sp = findParticipantById(room, speakerId);
+        const name = sp ? sp.name : '?';
+        const lang = sp ? sp.lang : sourceLang;
         const payload = JSON.stringify({ type: 'source_transcript', text: evt.delta, speakerId, name, lang });
-        wsParticipants.forEach((p, pws) => {
+        room.participants.forEach((p, pws) => {
           if (p.id !== speakerId && pws.readyState === WebSocket.OPEN) pws.send(payload);
         });
       }
       else if (evt.type === 'error') {
-        const msg = evt.error?.message || JSON.stringify(evt.error);
-        console.error(`[Translate] Error (${key}):`, msg);
-        // A broken session would otherwise sit in the map swallowing audio
-        // forever — close it so the next chunk transparently reopens one.
-        try { openaiWs.close(); } catch(e){}
-        if (translateSessions.get(key) === session) translateSessions.delete(key);
+        const msg = evt.error && evt.error.message ? evt.error.message : JSON.stringify(evt.error);
+        console.error(`[Translate ${room.code}] Error (${key}):`, msg);
+        try { openaiWs.close(); } catch (e) {}
+        if (room.translateSessions.get(key) === session) room.translateSessions.delete(key);
       }
     } catch (e) {
       console.error('[Translate] Parse error:', e.message);
     }
   });
 
-  openaiWs.on('close', (code) => {
-    console.log(`[Translate] Closed: ${key} (${code})`);
-    // Only remove if the map still points at THIS session — a late close
-    // event must not evict a newly reopened session under the same key
-    if (translateSessions.get(key) === session) translateSessions.delete(key);
+  openaiWs.on('close', () => {
+    if (room.translateSessions.get(key) === session) room.translateSessions.delete(key);
   });
-
   openaiWs.on('error', (err) => {
-    console.error(`[Translate] WS error (${key}):`, err.message);
-    if (translateSessions.get(key) === session) translateSessions.delete(key);
+    console.error(`[Translate ${room.code}] WS error (${key}):`, err.message);
+    if (room.translateSessions.get(key) === session) room.translateSessions.delete(key);
   });
 }
 
-function closeSpeakerSessions(speakerId) {
+function closeSpeakerSessions(room, speakerId) {
   const keysToClose = [];
-  translateSessions.forEach((s, key) => {
-    if (s.speakerId === speakerId) keysToClose.push(key);
-  });
+  room.translateSessions.forEach((s, key) => { if (s.speakerId === speakerId) keysToClose.push(key); });
   keysToClose.forEach((key) => {
-    const s = translateSessions.get(key);
-    if (s) { try { s.ws.close(); } catch(e){} translateSessions.delete(key); }
+    const s = room.translateSessions.get(key);
+    if (s) { try { s.ws.close(); } catch (e) {} room.translateSessions.delete(key); }
   });
 }
-
-// Close sessions whose target language no longer has any listener
-// (other than the speaker) — otherwise the OpenAI WS stays open idle
-// until the speaker disconnects.
-function pruneOrphanedSessions() {
-  translateSessions.forEach((s, key) => {
+function pruneOrphanedSessions(room) {
+  room.translateSessions.forEach((s, key) => {
     let hasAudience = false;
-    wsParticipants.forEach((p) => {
+    room.participants.forEach((p) => {
       if (p.id !== s.speakerId && p.lang === s.targetLang) hasAudience = true;
     });
     if (!hasAudience) {
-      console.log(`[Translate] Pruning orphaned session: ${key}`);
-      try { s.ws.close(); } catch(e){}
-      translateSessions.delete(key);
+      try { s.ws.close(); } catch (e) {}
+      room.translateSessions.delete(key);
     }
   });
 }
-
-function closeAllTranslateSessions() {
-  translateSessions.forEach((s, key) => {
-    try { s.ws.close(); } catch(e){}
-    translateSessions.delete(key);
+function closeAllTranslateSessions(room) {
+  room.translateSessions.forEach((s, key) => {
+    try { s.ws.close(); } catch (e) {}
+    room.translateSessions.delete(key);
   });
 }
 
 // ── WS Connection ──────────────────────────────────────
 wss.on('connection', (ws) => {
-  console.log('[WS] Client connected');
-
   ws.on('message', (data, isBinary) => {
     if (!isBinary) {
-      try {
-        const msg = JSON.parse(data.toString());
+      let msg;
+      try { msg = JSON.parse(data.toString()); }
+      catch (e) { return; }
 
-        if (msg.type === 'join') {
-          const id   = 'p_' + Math.random().toString(36).slice(2, 8);
-          const role = msg.role === 'host' ? 'host' : 'listener';
-          const name = sanitizeName(msg.name, role === 'host' ? 'Host' : 'Guest');
-          const lang = sanitizeLang(msg.lang);
-          wsParticipants.set(ws, { id, name, lang, role, muted: false, speaking: false });
-          ws.send(JSON.stringify({ type: 'joined', id, name, active: meetingActive, startTime: meetingStartTime }));
-          broadcastParticipantList();
-          console.log(`[WS] Joined: ${role} "${name}" / ${lang}`);
+      if (msg.type === 'join') {
+        const room = getRoom(msg.room);
+        if (!room) {
+          // No such room — tell the client so it can show "meeting not found"
+          // (or, for a host whose room vanished on restart, recreate one).
+          try { ws.send(JSON.stringify({ type: 'room_not_found' })); } catch (e) {}
+          return;
         }
-        else if (msg.type === 'lang_change') {
-          const p = wsParticipants.get(ws);
-          if (p) {
-            closeSpeakerSessions(p.id);
-            p.lang = sanitizeLang(msg.lang);
-            console.log(`[WS] Lang change: ${p.role} "${p.name}" → ${p.lang}`);
-            pruneOrphanedSessions();
-            broadcastParticipantList();
-          }
+        const id   = 'p_' + crypto.randomBytes(4).toString('hex');
+        // role 'host' is only granted with the correct secret token; otherwise
+        // the client is downgraded to a listener (can't mute/end the meeting).
+        const wantsHost = msg.role === 'host';
+        const authedHost = wantsHost && hostOk(room, msg.hostToken);
+        const role = authedHost ? 'host' : 'listener';
+        const name = sanitizeName(msg.name, role === 'host' ? 'Host' : 'Guest');
+        const lang = sanitizeLang(msg.lang);
+        if (wantsHost && !authedHost) {
+          console.warn(`[WS ${room.code}] Host join rejected (bad token) — downgraded to listener`);
         }
-        else if (msg.type === 'name_change') {
-          const p = wsParticipants.get(ws);
-          if (p && msg.name) {
-            p.name = sanitizeName(msg.name, p.name);
-            broadcastParticipantList();
-            // If currently speaking, re-broadcast speaker_active with updated name
-            if (p.speaking) {
-              broadcastAll({ type: 'speaker_active', id: p.id, name: p.name, lang: p.lang });
-            }
-            console.log(`[WS] Name changed: ${p.role} → "${p.name}"`);
-          }
+        room.participants.set(ws, { id, name, lang, role, muted: false, speaking: false, isHost: authedHost });
+        room.lastActivity = Date.now();
+        wsToRoom.set(ws, room.code);
+        ws.send(JSON.stringify({ type: 'joined', id, name, role, active: room.active, startTime: room.startTime }));
+        broadcastParticipantList(room);
+        console.log(`[WS ${room.code}] Joined: ${role} "${name}" / ${lang}`);
+        return;
+      }
+
+      // All other messages require an established room membership.
+      const room = getRoom(wsToRoom.get(ws));
+      if (!room) return;
+      const self = room.participants.get(ws);
+      if (!self) return;
+      room.lastActivity = Date.now();
+
+      if (msg.type === 'lang_change') {
+        closeSpeakerSessions(room, self.id);
+        self.lang = sanitizeLang(msg.lang);
+        pruneOrphanedSessions(room);
+        broadcastParticipantList(room);
+      }
+      else if (msg.type === 'name_change') {
+        if (msg.name) {
+          self.name = sanitizeName(msg.name, self.name);
+          broadcastParticipantList(room);
+          if (self.speaking) broadcastAll(room, { type: 'speaker_active', id: self.id, name: self.name, lang: self.lang });
         }
-        else if (msg.type === 'meeting_end') {
-          meetingActive = false;
-          closeAllTranslateSessions();
-          broadcastAll({ type: 'meeting_ended' });
-          console.log('[WS] Meeting ended by host');
+      }
+      else if (msg.type === 'meeting_end') {
+        if (!self.isHost) return;               // only the authenticated host
+        room.active = false;
+        closeAllTranslateSessions(room);
+        broadcastAll(room, { type: 'meeting_ended' });
+        console.log(`[WS ${room.code}] Meeting ended by host`);
+      }
+      else if (msg.type === 'mute_participant') {
+        if (!self.isHost) return;               // only the authenticated host
+        const target = findParticipantById(room, msg.targetId);
+        if (target) {
+          target.muted = !target.muted;
+          broadcastParticipantList(room);
         }
-        else if (msg.type === 'mute_participant') {
-          const sender = wsParticipants.get(ws);
-          if (!sender || sender.role !== 'host') return; // only the host may mute others
-          const target = findParticipantById(msg.targetId);
-          if (target) {
-            target.muted = !target.muted;
-            broadcastParticipantList();
-            console.log(`[WS] ${target.muted ? 'Muted' : 'Unmuted'}: ${target.name}`);
-          }
-        }
-        else if (msg.type === 'ping') {
-          ws.send(JSON.stringify({ type: 'pong' }));
-        }
-      } catch (e) {
-        console.error('[WS] JSON parse error:', e.message);
+      }
+      else if (msg.type === 'ping') {
+        ws.send(JSON.stringify({ type: 'pong' }));
       }
     } else {
-      // Binary: raw PCM16 audio from any speaker
-      const speaker = wsParticipants.get(ws);
+      // Binary: raw PCM16 audio from any speaker in the room
+      const room = getRoom(wsToRoom.get(ws));
+      if (!room) return;
+      const speaker = room.participants.get(ws);
       if (!speaker || speaker.muted) return;
 
-      // Silence gate with hangover: an always-open mic streams silence/room
-      // noise nonstop, which bloats the OpenAI input buffer (latency grows
-      // until translation stalls). Forward audio only while speech is active,
-      // plus 1.2s of trailing silence so the model still sees phrase boundaries.
-      // readInt16LE instead of an Int16Array view — ws buffers can be
-      // unaligned, and the typed-array constructor throws on odd offsets
+      // Silence gate with hangover (always-open mics bloat the OpenAI buffer).
       let peak = 0;
       const sampleCount = Math.floor(data.length / 2);
       for (let i = 0; i < sampleCount; i++) {
@@ -418,74 +459,69 @@ wss.on('connection', (ws) => {
         if (a > peak) peak = a;
       }
       const now = Date.now();
-      if (peak > 300) speaker.lastLoud = now;          // ~1% full scale (quiet mics still pass)
+      if (peak > 300) speaker.lastLoud = now;
       if (!speaker.lastLoud || now - speaker.lastLoud > 1200) return;
 
-      updateSpeakerActivity(speaker);
+      room.lastActivity = now;
+      updateSpeakerActivity(room, speaker);
 
       const audioB64 = Buffer.from(data).toString('base64');
+      const targetLangs = new Set();
+      const sameLangWs  = [];
 
-      // Collect all OTHER participants grouped by lang
-      const targetLangs   = new Set();
-      const sameLangWs    = [];
-
-      wsParticipants.forEach((p, cws) => {
+      room.participants.forEach((p, cws) => {
         if (cws === ws) return;
-        if (p.lang !== speaker.lang) {
-          targetLangs.add(p.lang);
-        } else {
-          // Same language: relay audio directly without translation
-          sameLangWs.push(cws);
-        }
+        if (p.lang !== speaker.lang) targetLangs.add(p.lang);
+        else sameLangWs.push(cws);
       });
 
-      // Route through translate sessions for different target languages
       targetLangs.forEach((targetLang) => {
         const key = `${speaker.id}_${targetLang}`;
-        if (!translateSessions.has(key)) {
-          openTranslateSession(speaker.id, speaker.lang, targetLang);
-        }
-        const s = translateSessions.get(key);
+        if (!room.translateSessions.has(key)) openTranslateSession(room, speaker.id, speaker.lang, targetLang);
+        const s = room.translateSessions.get(key);
         if (!s) return;
         if (!s.active || s.ws.readyState !== WebSocket.OPEN) {
-          // Session still handshaking — buffer instead of dropping the first words
-          if (s.pending.length < 100) s.pending.push(audioB64); // ~17s cap at 170ms/chunk
+          if (s.pending.length < 100) s.pending.push(audioB64);
           return;
         }
         s.ws.send(JSON.stringify({ type: 'session.input_audio_buffer.append', audio: audioB64 }));
       });
 
-      // Relay directly (same language, no translation needed)
       if (sameLangWs.length > 0) {
         const wav = buildWAV(Buffer.from(data), 24000);
-        const msg = JSON.stringify({ type: 'audio', audio: wav.toString('base64') });
-        sameLangWs.forEach((cws) => {
-          if (cws.readyState === WebSocket.OPEN) cws.send(msg);
-        });
+        const relay = JSON.stringify({ type: 'audio', audio: wav.toString('base64') });
+        sameLangWs.forEach((cws) => { if (cws.readyState === WebSocket.OPEN) cws.send(relay); });
       }
     }
   });
 
   ws.on('close', () => {
-    const p = wsParticipants.get(ws);
+    const room = getRoom(wsToRoom.get(ws));
+    wsToRoom.delete(ws);
+    if (!room) return;
+    const p = room.participants.get(ws);
     if (p) {
-      console.log(`[WS] Disconnected: ${p.role} "${p.name}"`);
-      clearTimeout(speakerTimers.get(p.id));
-      speakerTimers.delete(p.id);
-      wsParticipants.delete(ws);
-      // Close all translate sessions opened by this speaker
-      closeSpeakerSessions(p.id);
-      // Close other speakers' sessions that targeted this participant's language
-      pruneOrphanedSessions();
-      broadcastAll({ type: 'participant_left', id: p.id });
-      broadcastParticipantList();
+      console.log(`[WS ${room.code}] Disconnected: ${p.role} "${p.name}"`);
+      clearTimeout(room.speakerTimers.get(p.id));
+      room.speakerTimers.delete(p.id);
+      room.participants.delete(ws);
+      room.lastActivity = Date.now();
+      closeSpeakerSessions(room, p.id);
+      pruneOrphanedSessions(room);
+      broadcastAll(room, { type: 'participant_left', id: p.id });
+      broadcastParticipantList(room);
     }
   });
 
   ws.on('error', (err) => {
     console.error('[WS] Client error:', err.message);
-    const p = wsParticipants.get(ws);
-    if (p) { closeSpeakerSessions(p.id); wsParticipants.delete(ws); }
+    const room = getRoom(wsToRoom.get(ws));
+    wsToRoom.delete(ws);
+    if (room) {
+      const p = room.participants.get(ws);
+      if (p) closeSpeakerSessions(room, p.id);
+      room.participants.delete(ws);
+    }
   });
 });
 

@@ -1,28 +1,61 @@
 # MeetLingo — Technical Memory
-_Zuletzt aktualisiert: Juni 2026_
+_Zuletzt aktualisiert: Juni 2026 (Meeting-Räume + Host-Auth + Chat-Redesign)_
 
 ---
 
 ## Architecture
 
 ### Stack
-- **server.js** — Node.js + Express **+ `ws` WebSocket-Server** (`/ws/meeting`). Express dient nur noch für Hilfs-REST-Endpoints; die gesamte Audio-/Translation-Pipeline läuft über WebSocket.
-- **public/js/realtime.js** — Browser-WebSocket-Client (bidirektional): Mic-Capture, PCM16-Upload, gapless Audio-Playback, Sprach-/Namens-Wechsel.
+- **server.js** — Node.js + Express **+ `ws` WebSocket-Server** (`/ws/meeting`). Express dient nur noch für Hilfs-REST-Endpoints; die gesamte Audio-/Translation-Pipeline läuft über WebSocket. **State ist pro Raum** (siehe „Meeting-Räume").
+- **public/js/realtime.js** — Browser-WebSocket-Client (bidirektional): Mic-Capture, PCM16-Upload, gapless Audio-Playback, Sprach-/Namens-Wechsel. Sendet `room` (+ Host `hostToken`) beim Join.
+- **public/js/chat.js** — **Geteilter Chat-Renderer** (`window.MeetLingoChat`). Eine Karte pro Sprecher-Turn: `Name + Sprachkürzel` + Originaltext + Übersetzungs-Box. Wird von Host **und** Listener identisch genutzt.
 - **public/js/waveform.js** — `AnalyserNode`-basierte Balken-Visualisierung (`MeetLingoWaveform.start/stop`).
-- **public/js/audio.js** — **veraltet/ungenutzt.** Playback läuft jetzt in realtime.js. Nicht mehr in host.html/meeting.html eingebunden.
+- **public/js/audio.js** — **veraltet/ungenutzt.** Playback läuft jetzt in realtime.js. Nicht mehr eingebunden.
 - **public/js/ui-lang.js** — Geteilte UI-Übersetzungen für alle Onboarding/Post-Meeting Seiten.
 - **OpenAI Realtime Translations API** — `wss://api.openai.com/v1/realtime/translations?model=gpt-realtime-translate` (Speech-to-Speech). Zusätzlich `gpt-4o-mini` für Text-Übersetzung (Agenda/UI).
+
+---
+
+## Meeting-Räume + Host-Auth (wichtig — seit Juni 2026)
+
+**Kein globales Meeting mehr.** Jeder Host besitzt einen **Raum** mit eigenem State. Mehrere Meetings laufen parallel & isoliert.
+
+```js
+// server.js
+rooms     : Map(code -> Room)   // code = 6-stellig, Alphabet ohne I/O/0/1
+wsToRoom  : Map(ws -> code)      // schnelle Zuordnung bei message/close
+Room = {
+  code, hostToken,              // hostToken = crypto-random Secret, NUR der Host kennt es
+  active, startTime, agenda,
+  participants: Map(ws -> { id, name, lang, role, muted, speaking, isHost }),
+  translateSessions: Map("speakerId_targetLang" -> session),
+  speakerTimers: Map, lastActivity
+}
+// Leere Räume werden nach 1h idle gereapt (ROOM_TTL_MS).
+```
+
+### Ablauf
+1. **Host** lädt host.html → Bootstrap (`window._roomReady`): stored `meetlingo_room`+`meetlingo_host_token` reused wenn Server den Raum noch kennt, sonst `POST /api/create-room` → `{ room, hostToken }`. Code wird angezeigt (`#host-room-code`), QR-Link = `…/?room=CODE`.
+2. **Gast** scannt QR → `index.html?room=CODE` → Code-Feld vorausgefüllt (oder manuell tippen) → `meetlingo_room` gesetzt → wandert über localStorage durchs Onboarding.
+3. Alle REST/WS-Calls tragen `room`; **Host-Aktionen tragen `hostToken`**.
+
+### Host-Authentifizierung
+- **REST** `meeting-start`/`-end`/`agenda` (POST): ohne gültiges `hostToken` → **403** (`hostOk()` via `crypto.timingSafeEqual`).
+- **WS join** mit `role:'host'`: Token falsch → **Downgrade zu Listener** (`isHost=false`).
+- **WS** `mute_participant`/`meeting_end`: nur wenn `self.isHost` (sonst ignoriert).
+- localStorage: `meetlingo_room` (Host+Gast), `meetlingo_host_token` (nur Host, geheim).
+- **In-memory:** Server-Neustart löscht Räume → Host erzeugt beim Laden automatisch einen neuen (`onMLRoomNotFound` als Safety-Net beim WS-Join).
 
 ### Seiten-Übersicht
 
 | Datei | Zweck |
 |-------|-------|
-| `index.html` | Startseite — Sprachauswahl (Flag-Grid) |
+| `index.html` | Startseite — **Meeting-Code** (aus `?room=` oder manuell) + Sprachauswahl |
 | `login.html` | E-Mail eingeben |
-| `verify.html` | 6-stelligen Code eingeben (Server bypassed → immer gültig) |
+| `verify.html` | 6-stelligen **E-Mail**-Code eingeben (Server bypassed → immer gültig) |
 | `name.html` | Name-Onboarding (setzt `meetlingo_name`) |
-| `preferences.html` | Zielsprache + Lautstärke wählen, dann START LISTENING |
-| `waiting.html` | Listener-Wartescreen bis Host gestartet hat |
+| `preferences.html` | Zielsprache + Lautstärke wählen, dann START LISTENING → waiting.html |
+| `waiting.html` | Listener-Wartescreen; **joint Raum per WS** (zählt im Host-Setup mit) |
 | `meeting.html` | Listener-Meetingscreen (Translation läuft, kann auch selbst sprechen) |
 | `host.html` | Host-Screen (Mic, Agenda, Timer, Teilnehmer, START/END) |
 | `ended.html` | Post-Meeting Bewertung + E-Mail-Summary |
@@ -66,30 +99,35 @@ if (!speaker.lastLoud || now - speaker.lastLoud > 1200) return;  // 1.2s Hangove
 ```
 
 ### WS-Nachrichtenprotokoll
-**Client → Server (JSON):** `join {lang,role,name}`, `lang_change {lang}`, `name_change {name}`, `mute_participant {targetId}` (nur Host), `meeting_end`, `ping`. **Binary frame:** roher PCM16 24kHz.
-**Server → Client (JSON):** `joined {id,active,startTime}`, `audio {audio}`, `transcript {text}`, `source_transcript {text,name,lang,speakerId}`, `speaker_active/_inactive`, `participant_list`, `participant_left`, `agenda_update`, `meeting_started`, `meeting_ended`, `pong`, `error`.
+**Client → Server (JSON):** `join {room, lang, role, name, hostToken?}` (Host sendet `hostToken`), `lang_change {lang}`, `name_change {name}`, `mute_participant {targetId}` (nur authed Host), `meeting_end` (nur authed Host), `ping`. **Binary frame:** roher PCM16 24kHz.
+**Server → Client (JSON):** `joined {id, name, role, active, startTime}`, `room_not_found`, `audio {audio}`, `transcript {text, speakerId, name, sourceLang}`, `source_transcript {text, name, lang, speakerId}`, `speaker_active/_inactive`, `participant_list`, `participant_left`, `agenda_update`, `meeting_started`, `meeting_ended`, `pong`, `error`.
 
-### REST-Endpoints (server.js, Hilfsfunktionen)
+> **Chat-Pairing:** `transcript` (Übersetzung) trägt jetzt `speakerId/name/sourceLang`, damit chat.js Original (`source_transcript`) + Übersetzung zur **selben Karte** zusammenführt.
+
+### REST-Endpoints (server.js) — alle raum-scoped
 ```js
 POST /api/send-code, /api/verify-code   → Auth gebypassed (immer success)
-POST /api/agenda { agenda }             → setzt meetingAgenda + broadcast agenda_update (live an Gäste)
-GET  /api/agenda                        → { agenda }
-POST /api/meeting-start                 → meetingActive=true, startTime, broadcast meeting_started
-POST /api/meeting-end                   → meetingActive=false, closeAllTranslateSessions, broadcast meeting_ended
-GET  /api/meeting-status                → { active, startTime }   ← autoritativ für Host-Reload-Recovery
-GET  /api/meeting-time                  → { startTime }
-POST /api/translate-text { text, targetLanguage } → gpt-4o-mini, Text-only (Agenda/UI)
-GET  /api/listener-stats                → { counts, total } aus wsParticipants
-// Legacy (no-op, Kompatibilität): /api/reset-session, /api/listener-register,
-//                                  /api/listener-poll, /api/send-summary-email
+POST /api/create-room                   → { success, room, hostToken }  (jeder darf erstellen)
+POST /api/agenda   { room, hostToken, agenda }  → 403 ohne Token; broadcast agenda_update
+GET  /api/agenda?room=CODE              → { agenda }
+POST /api/meeting-start { room, hostToken }     → 403 ohne Token; active=true, broadcast meeting_started
+POST /api/meeting-end   { room, hostToken }     → 403 ohne Token; closeAllTranslateSessions, broadcast meeting_ended
+GET  /api/meeting-status?room=CODE      → { exists, active, startTime }  ← autoritativ (auch Timer-Quelle)
+GET  /api/listener-stats?room=CODE      → { counts, total } aus room.participants
+POST /api/translate-text { text, targetLanguage } → gpt-4o-mini, Text-only, stateless (kein Raum)
+POST /api/send-summary-email            → No-Op-Stub (Admin aktiviert später echten Versand)
+// ENTFERNT: /api/meeting-time (→ meeting-status), /api/reset-session,
+//           /api/listener-register, /api/listener-poll
 ```
 
 ### window.ML_HOST_MODE Flag
 ```js
 // host.html setzt VOR realtime.js:  window.ML_HOST_MODE = true;
-// realtime.js: role = ML_HOST_MODE ? 'host' : 'listener'
-//              langKey = ML_HOST_MODE ? 'meetlingo_host_lang' : 'meetlingo_lang'
-//   → Host-Sprache kontaminiert nicht die Listener-Prefs im selben Browser
+// realtime.js: role     = ML_HOST_MODE ? 'host' : 'listener'
+//              _langKey  = ML_HOST_MODE ? 'meetlingo_host_lang' : 'meetlingo_lang'
+//              _nameKey  = ML_HOST_MODE ? 'meetlingo_host_name' : 'meetlingo_name'
+//   → Host-Sprache/-Name kontaminieren nicht die Listener-Prefs im selben Browser
+//   → Host sendet zusätzlich hostToken beim join (role==='host')
 ```
 
 ### realtime.js — Public API (`window.MeetLingoRealtime`)
@@ -118,10 +156,26 @@ createScriptProcessor(4096, 1, 1)
 <script>window.ML_HOST_MODE = true;</script>
 <script src="/js/realtime.js"></script>
 <script src="/js/waveform.js"></script>
+<script src="/js/chat.js"></script>
 
 <!-- meeting.html (Listener — kann ebenfalls sprechen) -->
 <script src="/js/realtime.js"></script>
 <script src="/js/waveform.js"></script>
+<script src="/js/chat.js"></script>
+
+<!-- waiting.html lädt jetzt auch realtime.js → joint per WS, damit der Host
+     Wartende sofort im Connected-Guests-Zähler sieht -->
+```
+
+### chat.js — `window.MeetLingoChat`
+```js
+init(containerEl, { emptyText })       // Container muss flex-column sein
+addSource(speakerId, name, srcLang, delta)        // Original (foreign) deltas
+addTranslation(speakerId, name, srcLang, delta)   // Übersetzungs-deltas (eigene Sprache)
+setEmptyText(t) / reset()
+// 1 Karte je Sprecher-Turn (keyed by speakerId), finalisiert nach 2.6s Stille.
+// Eigene Nachrichten erscheinen NICHT (Server excludet den Sprecher).
+// meeting.html mountet in #conversation-history, host.html in #active-transcript.
 ```
 
 ---
@@ -144,9 +198,12 @@ Die **Chat-Realtime** API wurde aufgegeben (verhielt sich wie Chatbot, sendete k
 
 | Key | Inhalt | Gesetzt von |
 |-----|--------|-------------|
+| `meetlingo_room` | Raum-Code (6-stellig) | index.html (?room=), host.html bootstrap |
+| `meetlingo_host_token` | **Geheimes** Host-Token für den eigenen Raum | host.html (create-room) |
 | `meetlingo_lang` | Listener-Zielsprache z.B. `"Spanish"` | index.html, preferences.html |
 | `meetlingo_host_lang` | Host-Sprechsprache (getrennt von Listener!) | realtime.js (ML_HOST_MODE) |
-| `meetlingo_name` | Anzeigename des Teilnehmers | name.html, realtime.js setName |
+| `meetlingo_name` | Listener-Anzeigename | name.html, realtime.js setName |
+| `meetlingo_host_name` | Host-Anzeigename (getrennt, mirror zu host_lang) | host.html, realtime.js setName |
 | `meetlingo_volume` | Lautstärke 0–100 (Integer) | preferences.html |
 | `meetlingo_meeting_start` | Timestamp bei Host-Start | host.html `startTimer()` |
 | `meetlingo_meeting_end` | Timestamp bei Host-End | host.html END-Button |
@@ -166,18 +223,18 @@ Die **Chat-Realtime** API wurde aufgegeben (verhielt sich wie Chatbot, sendete k
 ## Meeting-Flow (Listener)
 
 ```
-index.html → login.html → verify.html → name.html → preferences.html
-  → [Server meeting-status active?]
-       JA  → meeting.html (Timer synced mit Server-startTime)
-       NEIN → waiting.html (pollt, redirect wenn active)
+(QR /?room=CODE oder Code tippen) → index.html [room gesetzt]
+  → login.html → verify.html → name.html → preferences.html
+  → waiting.html  [joint Raum per WS; onMLConnected.active ODER meeting_started → meeting.html]
+  → meeting.html  [prüft meeting-status?room: !exists→index, !active→waiting]
 ```
 
 ## Meeting-Flow (Host)
 
 ```
-host.html → START → POST /api/meeting-start, meetlingo_meeting_active='true', startMic()
-          → END   → POST /api/meeting-end (oder WS meeting_end), entfernt meetlingo_meeting_active
-          → confirmation.html
+host.html → _roomReady (reuse stored room ODER create-room) → Code+QR anzeigen → WS connect
+          → START → startMic() → POST /api/meeting-start {room,hostToken}, broadcast meeting_started
+          → END   → POST /api/meeting-end {room,hostToken} + WS meeting_end → confirmation.html
 ```
 
 ---
@@ -200,17 +257,22 @@ MeetLingoRealtime.startMic(...);  // synchron aus dem Click heraus
 
 ## Features (aktueller Stand)
 
+- **Meeting-Räume + Host-Auth** — siehe eigener Abschnitt oben.
+- **Einheitliches Chat-Design (Host + Listener)** — chat.js: eine Karte je Turn, `Name + Sprachkürzel` + Originaltext + Übersetzungs-Box in der eigenen Sprache.
 - **Bidirektionale Übersetzung** — jeder Teilnehmer kann sprechen, gleiche Sprache wird direkt durchgereicht.
-- **Live-Waveforms** — Host + Listener, Input-/Output-`AnalyserNode` via waveform.js.
-- **Teilnehmer-Panel** — `participant_list`, Speaking-Highlight (`speaker_active/_inactive`), Namen.
-- **Host-Mute** — nur Host darf andere muten (`mute_participant`), Listener sieht Banner.
-- **Live-Agenda** — In-Meeting-Bearbeitung wird via `agenda_update` an alle Gäste gepusht.
+- **Zwei Waveform-Boxen für ALLE** — „Your Voice" (eigene, grün, Input-Analyser) + „Others/Listeners" (blau, Output-Analyser). Listener-Input-Wave startet bei Mic-Start.
+- **Teilnehmer-Panel (Host)** — `participant_list`, Speaking-Highlight, Mute-Buttons.
+- **Host-Mute mit Enforcement** — Host mutet → Listener wird **zwangs-gemutet, Mic-Knopf gesperrt** (🔒, opacity 0.55, nicht klickbar) + lokalisiertes Banner (`MUTED_BY_HOST` map in meeting.html). Suppress no-signal-bar währenddessen.
+- **Live-Agenda** — In-Meeting-Bearbeitung via `agenda_update`, pro Raum.
+- **Wartezimmer-Zähler** — waiting.html joint per WS → Host sieht Wartende live im Setup-View (`#guest-count` aus `participant_list`).
 - **Name-Onboarding** — name.html, server-seitig sanitisiert.
 
 ## Sicherheit / Hardening (server.js)
-- `sanitizeLang()` (Whitelist aus LANG_CODES → sonst English), `sanitizeName()` (entfernt `<>&"'`, max 40 Zeichen).
-- Mute auf Host-Rolle beschränkt.
+- **Host-Token** gated jede Host-Aktion (REST 403 / WS-Downgrade) — `crypto.timingSafeEqual`.
+- `sanitizeLang()` (Whitelist → sonst English), `sanitizeName()` (entfernt `<>&"'`, max 40 Zeichen).
+- Mute/End nur für authentifizierten Host (`self.isHost`), nicht nur Rolle.
 - HTML-Escaping der Teilnehmernamen.
+- Raum-IDs/Token via `crypto` (randomInt / randomBytes), nicht `Math.random`.
 - `.env` (OpenAI API Key) **NIEMALS** committen; muss in `.gitignore`.
 
 ---

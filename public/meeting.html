@@ -125,17 +125,26 @@
     </div>
   </section>
 
-  <!-- Output waveform: shows translated audio playing back -->
-  <div style="width:100%;padding:10px 14px;background:#EFF6FF;border-radius:12px;border:1px solid #DBEAFE;display:flex;align-items:center;gap:10px;">
-    <span style="font-size:11px;font-weight:700;color:#4B9FFF;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;">Audio</span>
-    <canvas id="meeting-output-wave" width="300" height="32" style="flex:1;height:32px;border-radius:6px;display:block;"></canvas>
+  <!-- Dual waveform: own voice (green) + everyone else (blue) — same as host -->
+  <div style="background:#fff;border:1px solid #eee;border-radius:12px;width:100%;padding:12px 14px;">
+    <div style="display:flex;gap:12px;align-items:stretch;">
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:11px;font-weight:700;color:#95C11E;text-transform:uppercase;letter-spacing:.07em;">Your Voice</div>
+        <canvas id="meeting-input-wave" width="220" height="40" style="width:100%;height:40px;border-radius:8px;background:#F9FFE8;display:block;"></canvas>
+      </div>
+      <div style="width:1px;background:#f0f0f0;"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:11px;font-weight:700;color:#4B9FFF;text-transform:uppercase;letter-spacing:.07em;">Others</div>
+        <canvas id="meeting-output-wave" width="220" height="40" style="width:100%;height:40px;border-radius:8px;background:#EFF6FF;display:block;"></canvas>
+      </div>
+    </div>
   </div>
 
   <!-- Conversation History -->
   <section class="flex-grow flex flex-col">
     <div class="w-full bg-white rounded-xl translation-glow border border-surface-container-high flex flex-col" style="height:calc(100dvh - 380px); min-height:200px;">
       <div id="conversation-history" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:16px;scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;">
-        <p id="empty-state" style="color:#555555;font-style:italic;text-align:center;margin:auto;font-size:16px;">Waiting for speaker...</p>
+        <p id="empty-state" class="ml-chat-empty" style="color:#999;font-style:italic;text-align:center;margin:auto;font-size:15px;">Waiting for speaker...</p>
       </div>
     </div>
   </section>
@@ -243,6 +252,7 @@
 
 <script src="/js/realtime.js"></script>
 <script src="/js/waveform.js"></script>
+<script src="/js/chat.js"></script>
 <script>
 // ── UI Translations ──────────────────────────────────
 var UI = {
@@ -267,6 +277,8 @@ var UI = {
 };
 
 function getLang() { return localStorage.getItem('meetlingo_lang') || 'English'; }
+function mlRoom()  { return localStorage.getItem('meetlingo_room') || ''; }
+function mlRoomQS(){ return '?room=' + encodeURIComponent(mlRoom()); }
 function getT()    { return UI[getLang()] || UI['English']; }
 
 function applyUILanguage() {
@@ -274,7 +286,7 @@ function applyUILanguage() {
   var vl = document.getElementById('nav-volume-label'); if (vl) vl.textContent = t.volume;
   var ll = document.getElementById('nav-lang-label');   if (ll) ll.textContent = t.language;
   var lv = document.getElementById('nav-leave-label');  if (lv) lv.textContent = t.leave;
-  var es = document.getElementById('empty-state');      if (es && es.parentNode) es.textContent = t.waiting;
+  if (window.MeetLingoChat) MeetLingoChat.setEmptyText(t.waiting);
   var ns = document.getElementById('no-signal-text');   if (ns) ns.textContent = t.waiting;
   var ag = document.getElementById('agenda-title');     if (ag) ag.textContent = t.agenda.toUpperCase();
   var pt = document.getElementById('lang-picker-title'); if (pt) pt.textContent = t.picker;
@@ -321,7 +333,7 @@ async function translateAgenda(lang) {
 (function() {
   var agendaPollTimer = null;
   function fetchAgenda() {
-    fetch('/api/agenda').then(function(r){return r.json();}).then(function(d) {
+    fetch('/api/agenda' + mlRoomQS()).then(function(r){return r.json();}).then(function(d) {
       if (d.agenda && d.agenda.trim() && d.agenda !== serverAgendaText) {
         serverAgendaText = d.agenda;
         localStorage.setItem('meetlingo_agenda', d.agenda);
@@ -361,7 +373,7 @@ window.onMLAgendaUpdate = function(agenda) {
 // ── Timer ─────────────────────────────────────────────
 (function() {
   var el = document.getElementById('meeting-timer');
-  fetch('/api/meeting-time').then(function(r){return r.json();}).then(function(d) {
+  fetch('/api/meeting-status' + mlRoomQS()).then(function(r){return r.json();}).then(function(d) {
     var ts = d.startTime || parseInt(localStorage.getItem('meetlingo_meeting_start')) || Date.now();
     if (Date.now() - ts > 4*60*60*1000) ts = Date.now();
     window.meetingStartTs = ts;
@@ -426,7 +438,7 @@ function showHostEndedOverlay() {
 // Poll REST as fallback (in case WS meeting_ended missed)
 var _hostEndPollTimer = setInterval(function() {
   if (hostEndedShown) { clearInterval(_hostEndPollTimer); return; }
-  fetch('/api/meeting-status').then(function(r){return r.json();}).then(function(d) {
+  fetch('/api/meeting-status' + mlRoomQS()).then(function(r){return r.json();}).then(function(d) {
     if (!d.active) showHostEndedOverlay();
   }).catch(function(){});
 }, 3000);
@@ -518,9 +530,18 @@ var micBtn    = document.getElementById('mic-btn');
 var micIcon   = document.getElementById('mic-icon');
 var micStatus = document.getElementById('mic-status-label');
 var _micEverStarted = false;
+var _hostMuted      = false;   // muted by the host → mic locked, can't self-unmute
 
 function updateMicUI() {
   var t = getT();
+  if (_hostMuted) {
+    micBtn.style.background  = '#FF4444';
+    micBtn.style.boxShadow   = '0 4px 20px rgba(255,68,68,0.4)';
+    micIcon.textContent      = 'mic_off';
+    micBtn.classList.remove('mic-live-pulse');
+    micStatus.textContent    = '🔒 ' + t.muted;
+    return;
+  }
   if (MeetLingoRealtime.isMuted()) {
     micBtn.style.background  = '#FF4444';
     micBtn.style.boxShadow   = '0 4px 20px rgba(255,68,68,0.4)';
@@ -536,6 +557,7 @@ function updateMicUI() {
 }
 
 micBtn.addEventListener('click', function() {
+  if (_hostMuted) return;   // host muted you — can't unmute yourself
   var nowMuted = !MeetLingoRealtime.isMuted();
   MeetLingoRealtime.setMuted(nowMuted);
 
@@ -544,6 +566,7 @@ micBtn.addEventListener('click', function() {
     _micEverStarted = true;
     MeetLingoRealtime.startMic(function() {
       updateMicUI();
+      _startInputWaveform();
     }, function(err) {
       MeetLingoRealtime.setMuted(true);
       _micEverStarted = false;  // allow retry
@@ -563,21 +586,9 @@ window.onMLAudioActivity = function() {
   }
 };
 
-// ── Scroll / unread tracking ──────────────────────────
-var historyEl   = document.getElementById('conversation-history');
-var badge       = document.getElementById('unread-badge');
-var unreadCount = 0;
-var isAtBottom  = true;
-
-if (badge) badge.addEventListener('click', function() {
-  historyEl.scrollTop = historyEl.scrollHeight;
-  unreadCount = 0; badge.style.display = 'none';
-});
-if (historyEl) historyEl.addEventListener('scroll', function() {
-  var dist = historyEl.scrollHeight - historyEl.scrollTop - historyEl.clientHeight;
-  isAtBottom = dist < 60;
-  if (isAtBottom) { unreadCount = 0; if (badge) badge.style.display = 'none'; }
-});
+// ── Conversation (shared chat renderer) ───────────────
+var historyEl = document.getElementById('conversation-history');
+MeetLingoChat.init(historyEl, { emptyText: getT().waiting });
 
 // ── No-signal indicator ───────────────────────────────
 var _lastMsgTime = Date.now();
@@ -585,72 +596,8 @@ var _noSignalEl  = document.getElementById('no-signal-bar');
 setInterval(function() {
   if (!_noSignalEl) return;
   var silent = Date.now() - _lastMsgTime > 30000;
-  _noSignalEl.style.display = silent ? 'flex' : 'none';
+  _noSignalEl.style.display = (silent && !_hostMuted) ? 'flex' : 'none';
 }, 5000);
-
-// ── Live transcript accumulation ─────────────────────
-// Deltas arrive word-by-word; accumulate into one bubble per phrase.
-var _liveBubbleEl   = null;  // current in-progress bubble
-var _liveText       = '';    // accumulated text so far
-var _liveTimer      = null;  // finalize timer
-var _SENTENCE_END   = /[.!?،。！？]\s*$/;
-
-function _createBubble() {
-  var emptyState = document.getElementById('empty-state');
-  if (emptyState) emptyState.remove();
-  var now  = new Date();
-  var time = now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-  var div  = document.createElement('div');
-  div.style.cssText = 'display:flex;flex-direction:column;gap:0;animation:fadeIn 0.3s ease;';
-  div.innerHTML =
-    '<div style="align-self:flex-end;max-width:85%;">'
-    + '<p style="font-size:12px;color:#888;margin:0 0 4px 6px;font-style:italic;text-align:right;">'
-    + getLang() + ' · ' + time + '</p>'
-    + '<div class="_live-text" style="background:#EEEEEE;color:#1A1A1A;padding:12px 16px;border-radius:16px;border-bottom-right-radius:4px;font-size:15px;line-height:1.5;min-width:40px;"></div>'
-    + '</div>';
-  historyEl.appendChild(div);
-  if (isAtBottom) historyEl.scrollTop = historyEl.scrollHeight;
-  return div;
-}
-
-function _finalizeBubble() {
-  _liveBubbleEl = null;
-  _liveText     = '';
-}
-
-function addToHistory(delta) {
-  if (!delta) return;
-  if (!historyEl) return;
-  _lastMsgTime = Date.now();
-
-  _liveText += delta;
-
-  // Create a new bubble if none active
-  if (!_liveBubbleEl) _liveBubbleEl = _createBubble();
-
-  // Update bubble text live
-  var textEl = _liveBubbleEl.querySelector('._live-text');
-  if (textEl) {
-    textEl.textContent = _liveText;
-    if (isAtBottom) historyEl.scrollTop = historyEl.scrollHeight;
-  }
-
-  // Notify unread only once per new bubble (on first delta)
-  if (_liveText === delta && !isAtBottom) {
-    unreadCount++;
-    var t = getT();
-    if (badge) {
-      badge.textContent  = '↓ ' + unreadCount + ' ' + (unreadCount === 1
-        ? (t.new_msg  || 'new message')
-        : (t.new_msgs || 'new messages'));
-      badge.style.display = 'block';
-    }
-  }
-
-  // Finalize: sentence-end punctuation → 400ms, otherwise → 2.5s silence
-  clearTimeout(_liveTimer);
-  _liveTimer = setTimeout(_finalizeBubble, _SENTENCE_END.test(_liveText) ? 400 : 2500);
-}
 
 // ── Unlock AudioContext on first user gesture (Safari autoplay policy) ───
 var _waveformStarted = false;
@@ -662,6 +609,13 @@ function _startOutputWaveform() {
     var analyser = MeetLingoRealtime.getOutputAnalyser();
     if (canvas && analyser) MeetLingoWaveform.start(canvas, analyser, '#4B9FFF');
   }, 150);
+}
+
+// Own-voice waveform — analyser only exists once the listener starts the mic
+function _startInputWaveform() {
+  var canvas = document.getElementById('meeting-input-wave');
+  var analyser = MeetLingoRealtime.getInputAnalyser();
+  if (canvas && analyser) MeetLingoWaveform.start(canvas, analyser, '#95C11E');
 }
 document.addEventListener('click', function _unlock() {
   MeetLingoRealtime.unlockAudio();
@@ -690,69 +644,42 @@ function hideSpeakerIndicator() {
   }, 600);
 }
 
-// ── Source transcript (original speech) ──────────────
-var _sourceBubbleEl = null;
-var _sourceText     = '';
-var _sourceTimer    = null;
-var _sourceSpeakerId = null;
-
-function _ensureSourceBubble(speakerId, name, lang) {
-  if (_sourceBubbleEl && _sourceSpeakerId === speakerId) return _sourceBubbleEl;
-  // Finalize previous
-  _sourceBubbleEl  = null;
-  _sourceText      = '';
-  _sourceSpeakerId = speakerId;
-  var emptyState = document.getElementById('empty-state');
-  if (emptyState) emptyState.remove();
-  var now  = new Date();
-  var time = now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-  var div  = document.createElement('div');
-  div.style.cssText = 'display:flex;flex-direction:column;gap:0;animation:fadeIn 0.3s ease;';
-  div.innerHTML =
-    '<div style="align-self:flex-start;max-width:85%;">'
-    + '<p class="_src-meta" style="font-size:12px;color:#888;margin:0 0 4px 6px;font-style:italic;"></p>'
-    + '<div class="_src-text" style="background:#F5F5F5;color:#666;padding:10px 14px;border-radius:16px;border-bottom-left-radius:4px;font-size:13px;line-height:1.5;font-style:italic;min-width:40px;"></div>'
-    + '</div>';
-  // Name/lang are user-controlled → set via textContent, never innerHTML
-  div.querySelector('._src-meta').textContent = name + ' (' + lang + ') · ' + time;
-  historyEl.appendChild(div);
-  if (isAtBottom) historyEl.scrollTop = historyEl.scrollHeight;
-  _sourceBubbleEl = div;
-  return div;
-}
-
-function addSourceText(delta, speakerId, name, lang) {
-  if (!delta || !historyEl) return;
-  _lastMsgTime = Date.now();
-  // Ensure bubble BEFORE appending — on speaker change it resets _sourceText,
-  // which would otherwise wipe this delta
-  var bubble = _ensureSourceBubble(speakerId, name, lang);
-  _sourceText += delta;
-  var textEl  = bubble.querySelector('._src-text');
-  if (textEl) {
-    textEl.textContent = _sourceText;
-    if (isAtBottom) historyEl.scrollTop = historyEl.scrollHeight;
-  }
-  clearTimeout(_sourceTimer);
-  _sourceTimer = setTimeout(function() {
-    _sourceBubbleEl  = null;
-    _sourceText      = '';
-    _sourceSpeakerId = null;
-  }, 2500);
-}
-
-// ── Muted-by-host banner ──────────────────────────────
-// Server drops a muted participant's audio silently — without this
-// the listener speaks into the void with no feedback.
+// ── Muted-by-host: force silence + reflect on the red mic button ──────
+// Server drops a muted participant's audio silently — without this the
+// listener speaks into the void. We also lock their mic button so the
+// "muted by host" state is unmistakable and can't be self-undone.
+var MUTED_BY_HOST = {
+  English:'You were muted by the host', German:'Du wurdest vom Host stummgeschaltet',
+  Spanish:'El anfitrión te silenció', French:"L'hôte vous a mis en sourdine",
+  Italian:"L'host ti ha silenziato", Japanese:'ホストにミュートされました',
+  Portuguese:'O anfitrião silenciou você', Turkish:'Sunucu sizi sessize aldı',
+  Dutch:'De host heeft je gedempt', Korean:'호스트가 음소거했습니다',
+  Chinese:'主持人将你静音', Arabic:'قام المضيف بكتم صوتك',
+  Russian:'Организатор отключил ваш микрофон', Polish:'Host wyciszył Cię',
+  Swedish:'Värden stängde av din mikrofon', Hindi:'होस्ट ने आपको म्यूट किया',
+  Greek:'Ο οικοδεσπότης σε έκανε σίγαση', Ukrainian:'Організатор вимкнув ваш мікрофон'
+};
 var _mutedBanner = null;
 function _setMutedByHost(muted) {
+  if (_hostMuted === muted) { if (!muted) return; }
+  _hostMuted = muted;
   if (!_mutedBanner) {
     _mutedBanner = document.createElement('div');
-    _mutedBanner.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#FEE2E2;color:#991B1B;font-size:13px;font-weight:700;padding:8px 16px;border-radius:10px;z-index:60;display:none;box-shadow:0 2px 10px rgba(0,0,0,.08);white-space:nowrap;';
-    _mutedBanner.textContent = '🔇 You were muted by the host';
+    // z-index 101 keeps it above the no-signal bar; the no-signal bar is also
+    // suppressed while host-muted so the two never stack.
+    _mutedBanner.style.cssText = 'position:fixed;top:68px;left:50%;transform:translateX(-50%);background:#FEE2E2;color:#991B1B;font-size:13px;font-weight:700;padding:8px 16px;border-radius:10px;z-index:101;display:none;box-shadow:0 2px 10px rgba(0,0,0,.12);white-space:nowrap;';
     document.body.appendChild(_mutedBanner);
   }
+  if (muted) _mutedBanner.textContent = '🔇 ' + (MUTED_BY_HOST[getLang()] || MUTED_BY_HOST.English);
   _mutedBanner.style.display = muted ? 'block' : 'none';
+  if (muted) {
+    MeetLingoRealtime.setMuted(true);
+    micBtn.classList.remove('mic-live-pulse');
+    if (_noSignalEl) _noSignalEl.style.display = 'none';
+  }
+  micBtn.style.opacity = muted ? '0.55' : '1';
+  micBtn.style.cursor  = muted ? 'not-allowed' : 'pointer';
+  updateMicUI();
 }
 
 window.onMLParticipants = function(parts) {
@@ -764,32 +691,36 @@ window.onMLParticipants = function(parts) {
 };
 
 // ── WebSocket callbacks ───────────────────────────────
-window.onMLTranscript    = function(text) { addToHistory(text); };
+window.onMLTranscript    = function(text, speakerId, name, sourceLang) { _lastMsgTime = Date.now(); MeetLingoChat.addTranslation(speakerId, name, sourceLang, text); };
 window.onMLMeetingEnded  = function()     { showHostEndedOverlay(); };
 window.onMLError         = function(msg)  { console.warn('[Meeting] WS error:', msg); };
 window.onMLSpeakerActive = function(id, name, lang) { showSpeakerIndicator(name, lang); };
 window.onMLSpeakerInactive = function(id) { hideSpeakerIndicator(); };
-window.onMLSourceTranscript = function(text, name, lang, speakerId) {
-  addSourceText(text, speakerId, name, lang);
-};
+window.onMLSourceTranscript = function(text, name, lang, speakerId) { _lastMsgTime = Date.now(); MeetLingoChat.addSource(speakerId, name, lang, text); };
+// Server lost the room (restart / bad code) → back to the join screen.
+window.onMLRoomNotFound = function() { window.location.href = 'index.html'; };
 
-// ── Init: check meeting active, then connect WS ───────
-fetch('/api/meeting-status')
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    if (!d.active) { window.location.href = 'waiting.html'; return; }
-    MeetLingoRealtime.connect();
-    applyUILanguage();
-    updateMicUI();
-  })
-  .catch(function() {
-    if (localStorage.getItem('meetlingo_meeting_active') !== 'true') {
-      window.location.href = 'waiting.html'; return;
-    }
-    MeetLingoRealtime.connect();
-    applyUILanguage();
-    updateMicUI();
-  });
+// ── Init: check the room's status, then connect WS ────
+if (!mlRoom()) {
+  // No code at all → start over on the join screen
+  window.location.href = 'index.html';
+} else {
+  fetch('/api/meeting-status' + mlRoomQS())
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d.exists) { window.location.href = 'index.html'; return; }   // unknown room
+      if (!d.active) { window.location.href = 'waiting.html'; return; } // not started yet
+      MeetLingoRealtime.connect();
+      applyUILanguage();
+      updateMicUI();
+    })
+    .catch(function() {
+      // Network hiccup — fall back to connecting; WS will redirect if needed
+      MeetLingoRealtime.connect();
+      applyUILanguage();
+      updateMicUI();
+    });
+}
 </script>
 </body>
 </html>
