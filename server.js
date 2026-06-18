@@ -8,7 +8,16 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static assets. HTML/JS must always revalidate so a Railway redeploy
+// never leaves a browser running stale code (the classic "nothing works after
+// deploy" trap: old host.html points at a room the restarted server forgot).
+// ETags make revalidation cheap (304 when unchanged); other assets cache normally.
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: true,
+  setHeaders: function (res, filePath) {
+    if (/\.(html|js)$/i.test(filePath)) res.setHeader('Cache-Control', 'no-cache');
+  }
+}));
 app.use(express.json({ limit: '10mb' }));
 
 // ── OpenAI ───────────────────────────────────────────
