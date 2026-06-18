@@ -532,6 +532,25 @@ var micStatus = document.getElementById('mic-status-label');
 var _micEverStarted = false;
 var _hostMuted      = false;   // muted by the host → mic locked, can't self-unmute
 
+// Own-voice waveform reflects mute state: green+animated when live,
+// flat+gray when muted (or host-muted) so it doesn't keep bouncing silently.
+var _inputWaveState = '';
+function _applyInputWave(state) {
+  if (_inputWaveState === state) return;
+  _inputWaveState = state;
+  var canvas = document.getElementById('meeting-input-wave');
+  if (!canvas) return;
+  if (state === 'live') {
+    canvas.style.background = '#F9FFE8';
+    var analyser = MeetLingoRealtime.getInputAnalyser();
+    if (analyser) MeetLingoWaveform.start(canvas, analyser, '#95C11E');
+    else { _inputWaveState = ''; }   // no analyser yet → retry on next call
+  } else {
+    canvas.style.background = '#EFEFEF';
+    MeetLingoWaveform.flatline(canvas, '#B8B8B8');
+  }
+}
+
 function updateMicUI() {
   var t = getT();
   if (_hostMuted) {
@@ -540,6 +559,7 @@ function updateMicUI() {
     micIcon.textContent      = 'mic_off';
     micBtn.classList.remove('mic-live-pulse');
     micStatus.textContent    = '🔒 ' + t.muted;
+    _applyInputWave('muted');
     return;
   }
   if (MeetLingoRealtime.isMuted()) {
@@ -548,11 +568,13 @@ function updateMicUI() {
     micIcon.textContent      = 'mic_off';
     micBtn.classList.remove('mic-live-pulse');
     micStatus.textContent    = t.muted;
+    _applyInputWave('muted');
   } else {
     micBtn.style.background  = '#95C11E';
     micBtn.style.boxShadow   = '0 4px 20px rgba(149,193,30,0.4)';
     micIcon.textContent      = 'mic';
     micStatus.textContent    = t.live + ' — ' + getLang();
+    _applyInputWave('live');
   }
 }
 
@@ -565,8 +587,8 @@ micBtn.addEventListener('click', function() {
     // First unmute: request mic permission (must be in user-gesture chain)
     _micEverStarted = true;
     MeetLingoRealtime.startMic(function() {
-      updateMicUI();
-      _startInputWaveform();
+      _inputWaveState = '';      // force the wave to (re)start now the analyser exists
+      updateMicUI();             // → _applyInputWave('live') draws the green wave
     }, function(err) {
       MeetLingoRealtime.setMuted(true);
       _micEverStarted = false;  // allow retry
@@ -611,12 +633,6 @@ function _startOutputWaveform() {
   }, 150);
 }
 
-// Own-voice waveform — analyser only exists once the listener starts the mic
-function _startInputWaveform() {
-  var canvas = document.getElementById('meeting-input-wave');
-  var analyser = MeetLingoRealtime.getInputAnalyser();
-  if (canvas && analyser) MeetLingoWaveform.start(canvas, analyser, '#95C11E');
-}
 document.addEventListener('click', function _unlock() {
   MeetLingoRealtime.unlockAudio();
   _startOutputWaveform();

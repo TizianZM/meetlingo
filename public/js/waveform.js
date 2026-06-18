@@ -54,6 +54,25 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
+  // Stop animating and draw a flat, dim baseline — the "muted / no signal"
+  // state, so a muted mic doesn't keep visually bouncing with the live input.
+  function flatline(canvas, color) {
+    if (!canvas) return;
+    stop(canvas);
+    var ctx = canvas.getContext('2d');
+    var w = canvas.width, h = canvas.height;
+    var barCount = 32;
+    var barW = Math.floor(w / barCount) - 1;
+    for (var i = 0; i < barCount; i++) {
+      var x = i * (barW + 1);
+      var y = (h - 2) / 2;
+      ctx.fillStyle = hexToRgba(color || '#B8B8B8', 0.45);
+      ctx.beginPath();
+      roundRect(ctx, x, y, barW, 2, 1);
+      ctx.fill();
+    }
+  }
+
   function hexToRgba(hex, alpha) {
     hex = hex.replace('#', '');
     if (hex.length === 3) hex = hex.split('').map(function(c){ return c+c; }).join('');
@@ -74,6 +93,6 @@
     ctx.closePath();
   }
 
-  window.MeetLingoWaveform = { start: start, stop: stop };
+  window.MeetLingoWaveform = { start: start, stop: stop, flatline: flatline };
   console.log('[Waveform] waveform.js loaded ✓');
 })();

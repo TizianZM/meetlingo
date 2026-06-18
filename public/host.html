@@ -533,14 +533,7 @@
                             actionLabel.textContent = 'END MEETING';
                             updateHostMicUI();
                             // Start waveform visualizations (mic is live, AudioContext is running)
-                            setTimeout(function() {
-                                var inCanvas  = document.getElementById('host-input-wave');
-                                var outCanvas = document.getElementById('host-output-wave');
-                                var inA  = MeetLingoRealtime.getInputAnalyser();
-                                var outA = MeetLingoRealtime.getOutputAnalyser();
-                                if (inA  && inCanvas)  MeetLingoWaveform.start(inCanvas,  inA,  '#95C11E');
-                                if (outA && outCanvas) MeetLingoWaveform.start(outCanvas, outA, '#4B9FFF');
-                            }, 200);
+                            hostStartWaveforms();
                         },
                         function(err) {
                             // Mic denied → stay on setup, show actionable error
@@ -784,6 +777,25 @@
   var _activeMuteLabel = document.getElementById('active-mute-label');
   var _micEverStarted  = false;
 
+  // Own-voice ("Your Voice") wave reflects mute: green+animated when live,
+  // flat+gray when muted — so a muted mic doesn't keep bouncing silently.
+  var _hostInputWaveState = '';
+  function _applyHostInputWave(state) {
+    if (_hostInputWaveState === state) return;
+    _hostInputWaveState = state;
+    var canvas = document.getElementById('host-input-wave');
+    if (!canvas) return;
+    if (state === 'live') {
+      canvas.style.background = '#F9FFE8';
+      var inA = MeetLingoRealtime.getInputAnalyser();
+      if (inA) MeetLingoWaveform.start(canvas, inA, '#95C11E');
+      else { _hostInputWaveState = ''; }
+    } else {
+      canvas.style.background = '#EFEFEF';
+      MeetLingoWaveform.flatline(canvas, '#B8B8B8');
+    }
+  }
+
   function updateHostMicUI() {
     if (!_micLive) {
       // Mic not yet acquired (e.g. right after a mid-meeting reload) — invite
@@ -791,28 +803,31 @@
       _activeMuteBtn.style.background = '#888';
       _activeMuteIcon.textContent     = 'mic_off';
       _activeMuteLabel.textContent    = 'Tap to resume';
+      _applyHostInputWave('muted');
       return;
     }
     if (_activeMuted) {
       _activeMuteBtn.style.background = '#888';
       _activeMuteIcon.textContent     = 'mic_off';
       _activeMuteLabel.textContent    = 'Muted';
+      _applyHostInputWave('muted');
     } else {
       _activeMuteBtn.style.background = '#e03030';
       _activeMuteIcon.textContent     = 'mic';
       _activeMuteLabel.textContent    = 'Live';
+      _applyHostInputWave('live');
     }
   }
 
-  // Start the input/output waveform visualizers (mic live, AudioContext running)
+  // Start the waveform visualizers (mic live, AudioContext running). The output
+  // ("Others") wave always animates; the input wave follows the mute state.
   function hostStartWaveforms() {
     setTimeout(function() {
-      var inCanvas  = document.getElementById('host-input-wave');
       var outCanvas = document.getElementById('host-output-wave');
-      var inA  = MeetLingoRealtime.getInputAnalyser();
       var outA = MeetLingoRealtime.getOutputAnalyser();
-      if (inA  && inCanvas)  MeetLingoWaveform.start(inCanvas,  inA,  '#95C11E');
       if (outA && outCanvas) MeetLingoWaveform.start(outCanvas, outA, '#4B9FFF');
+      _hostInputWaveState = '';        // force (re)start now the analyser exists
+      _applyHostInputWave(_activeMuted ? 'muted' : 'live');
     }, 200);
   }
 
