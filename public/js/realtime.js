@@ -53,7 +53,11 @@
       var bytes  = new Uint8Array(binary.length);
       for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
 
-      ctx.decodeAudioData(bytes.buffer.slice(0), function (buf) {
+      // Server sends PCM16 mono 24kHz wrapped in WAV. decodeAudioData (meant for
+      // compressed formats) is async + CPU-heavy per chunk → stutters on phones.
+      // Build the AudioBuffer directly from the PCM samples — synchronous & cheap.
+      var buf = _pcmWavToBuffer(ctx, bytes);
+      if (buf) {
         var doSchedule = function () {
           try {
             if (_nextPlayAt < ctx.currentTime) _nextPlayAt = ctx.currentTime + 0.05;
@@ -87,11 +91,44 @@
         } else {
           doSchedule();
         }
-      }, function (err) {
-        console.error('[Realtime] decodeAudioData error:', err);
-      });
+      }
     } catch (e) {
       console.error('[Realtime] Chunk decode setup error:', e);
+    }
+  }
+
+  // Parse a PCM16 mono WAV (our server's fixed 44-byte-header format, 24kHz) into
+  // an AudioBuffer without decodeAudioData. Falls back gracefully if the bytes
+  // aren't the expected WAV layout. Buffer is created at the data's real rate
+  // (24000) — the context resamples on playback if its own rate differs.
+  function _pcmWavToBuffer(ctx, bytes) {
+    try {
+      var dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      var dataOffset = 44, sampleRate = 24000;
+      // Verify RIFF/WAVE; read sampleRate + locate 'data' chunk for robustness.
+      if (bytes.length > 44 &&
+          bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+        sampleRate = dv.getUint32(24, true) || 24000;
+        // scan for 'data' subchunk (usually at 36)
+        var off = 12;
+        while (off + 8 <= bytes.length) {
+          var id = String.fromCharCode(bytes[off], bytes[off+1], bytes[off+2], bytes[off+3]);
+          var sz = dv.getUint32(off + 4, true);
+          if (id === 'data') { dataOffset = off + 8; break; }
+          off += 8 + sz;
+        }
+      }
+      var nSamples = (bytes.length - dataOffset) >> 1;
+      if (nSamples <= 0) return null;
+      var buf = ctx.createBuffer(1, nSamples, sampleRate);
+      var ch  = buf.getChannelData(0);
+      for (var i = 0; i < nSamples; i++) {
+        ch[i] = dv.getInt16(dataOffset + i * 2, true) / 32768;
+      }
+      return buf;
+    } catch (e) {
+      console.error('[Realtime] PCM parse error:', e);
+      return null;
     }
   }
 

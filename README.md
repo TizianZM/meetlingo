@@ -2,7 +2,7 @@
 
 **Real-time speech translation for multilingual meetings.**
 
-A host speaks into their microphone — MeetLingo transcribes, translates, and delivers the speech to every listener in their own language, live.
+Everyone in the room can speak — MeetLingo translates each person's voice into every other participant's language, live, as speech **and** text. Same chat view for host and listeners.
 
 🌐 **Live Demo:** [meetlingo-production.up.railway.app](https://meetlingo-production.up.railway.app)
 
@@ -10,11 +10,11 @@ A host speaks into their microphone — MeetLingo transcribes, translates, and d
 
 ## What it does
 
-1. **Host** opens the host dashboard, selects their speaking language, and presses Start
-2. **Listeners** join via QR code or link, pick their preferred language
-3. Host speaks → listeners read the live translation on their phone
+1. **Host** opens the host dashboard → gets a 6-character **meeting code** + QR link, picks a speaking language, presses Start.
+2. **Listeners** scan the QR (or type the code), enter a name, pick their language → join the same room.
+3. Anyone speaks → everyone else hears the **translated audio** and reads the live transcript in their own language. Same-language participants get the audio passed through untranslated.
 
-No app install required. Works in any browser.
+Multiple meetings run in parallel and fully isolated. No app install — works in any browser.
 
 ---
 
@@ -22,30 +22,33 @@ No app install required. Works in any browser.
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Node.js + Express |
-| Speech-to-Text | OpenAI Whisper |
-| Translation | GPT-4o-mini (parallel, per active language) |
-| Audio playback | Web Audio API |
-| Deployment | Railway |
+| Backend | Node.js + Express + `ws` WebSocket server |
+| Speech translation | OpenAI **Realtime Translations** API (`gpt-realtime-translate`, speech-to-speech) |
+| Text translation | `gpt-4o-mini` (agenda + UI strings) |
+| Audio capture/playback | Web Audio API (24 kHz PCM16, gapless scheduling) |
+| Deployment | Railway (auto-deploy from `master`) |
 
 ---
 
 ## Architecture
 
 ```
-Host mic → PCM16 chunks → WAV → POST /api/host-translate
-  → Whisper (transcribe once)
-  → GPT-4o-mini × N active languages (parallel)
-  → text pushed to in-memory queue
+Speaker mic → PCM16 24kHz chunks → binary WS frame → server
+  server silence-gate (peak > 300, 1.2s hangover) drops silence
+  → per OTHER target language among participants:
+       OpenAI translate-session "${speakerId}_${targetLang}" (WS)
+       → translated audio (PCM16 → WAV) broadcast to that language
+       → translated + source transcripts broadcast for the chat
+  → same-language participants: audio passed through, no translation
 
-Listeners poll GET /api/listener-poll every 300ms
-  → receive translated text
-  → display live in chat-style UI
+Client receives { type:'audio' } → gapless playback via Web Audio API
 ```
 
-- **One transcription, N translations** — Whisper runs once regardless of how many listeners are connected
-- **No WebSockets** — lightweight long-polling keeps Railway deployment simple
-- **Session-aware** — listeners register with a session ID and language; server tracks active languages and only translates into languages someone actually needs
+- **Per-room state** — `rooms: Map(code → Room)`; each host owns an isolated room with its own participants, agenda and translate-sessions. Empty rooms are reaped after 1h idle.
+- **Host authentication** — host actions (start/end/agenda/mute) are gated by a secret `hostToken` (`crypto.timingSafeEqual`); REST returns 403 and WS downgrades an impostor `role:host` join to listener.
+- **Bidirectional** — every connected client can enable their mic and speak; translation routes by target language.
+- **WebSocket, not polling** — a single `/ws/meeting` connection carries audio frames, transcripts and control messages both ways.
+- **Resilient sessions** — translate-sessions are lazily opened per `(speaker, language)`, buffer audio during the handshake so the first words aren't lost, auto-recover on error/close, and are pruned when no listener needs that language.
 
 ---
 
@@ -79,19 +82,26 @@ npm start
 
 ```
 meetlingo/
-├── server.js              # Express server + all API endpoints
+├── server.js              # Express + ws server, per-room state, host auth, translate pipeline
 ├── public/
-│   ├── index.html         # Landing page (language selection + QR code)
-│   ├── host.html          # Host dashboard (mic, agenda, listener stats)
-│   ├── meeting.html       # Listener meeting view (live translation)
-│   ├── preferences.html   # Language & volume settings
-│   ├── waiting.html       # Listener wait screen
+│   ├── index.html         # Landing — meeting code (?room= or manual) + language
+│   ├── login.html         # Email entry
+│   ├── verify.html        # Email code (auth bypassed server-side)
+│   ├── name.html          # Name onboarding
+│   ├── preferences.html   # Target language + volume
+│   ├── waiting.html       # Listener wait screen (joins room over WS)
+│   ├── meeting.html       # Listener meeting view (can also speak)
+│   ├── host.html          # Host dashboard (mic, agenda, code/QR, participants)
 │   ├── ended.html         # Post-meeting feedback
 │   └── js/
-│       ├── translation.js # Mic capture → Whisper → API
-│       ├── audio.js       # Audio playback (Web Audio API)
+│       ├── realtime.js    # WS client: mic capture, PCM16 upload, gapless playback
+│       ├── chat.js        # Shared chat renderer (one card per speaker turn)
+│       ├── waveform.js    # AnalyserNode bar visualization
 │       └── ui-lang.js     # UI translations for all 18 languages
 ```
+
+> `public/js/audio.js` and `translation.js` belong to the retired Whisper/long-polling
+> pipeline and are no longer used.
 
 ---
 
