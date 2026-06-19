@@ -642,6 +642,41 @@ document.addEventListener('touchend', function _unlockT() {
   _startOutputWaveform();
 }, { once: true });
 
+// ── Audio gate (mobile autoplay) ──────────────────────────────────────
+// A listener reaches this page via an automatic redirect (no user gesture),
+// so the AudioContext stays "suspended": translated TEXT shows immediately but
+// translated AUDIO is silent until the user happens to tap something. Force one
+// up-front tap to unlock audio right away.
+var AUDIO_GATE_T = {
+  English:'Tap to enable audio', German:'Tippen, um Audio zu aktivieren',
+  Spanish:'Toca para activar el audio', French:"Appuyez pour activer l'audio",
+  Italian:"Tocca per attivare l'audio", Japanese:'タップして音声を有効化',
+  Portuguese:'Toque para ativar o áudio', Turkish:'Sesi etkinleştirmek için dokunun',
+  Dutch:'Tik om audio in te schakelen', Korean:'오디오를 켜려면 탭하세요',
+  Chinese:'点按以启用音频', Arabic:'انقر لتفعيل الصوت',
+  Russian:'Нажмите, чтобы включить звук', Polish:'Dotknij, aby włączyć dźwięk',
+  Swedish:'Tryck för att aktivera ljud', Hindi:'ऑडियो चालू करने के लिए टैप करें',
+  Greek:'Πατήστε για ενεργοποίηση ήχου', Ukrainian:'Натисніть, щоб увімкнути звук'
+};
+(function() {
+  var gate = document.createElement('div');
+  gate.id = 'audio-gate';
+  gate.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(26,28,28,0.93);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;cursor:pointer;transition:opacity .25s;';
+  gate.innerHTML = '<div style="width:92px;height:92px;border-radius:50%;background:#95C11E;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 30px rgba(149,193,30,.5);animation:live-dot 1.6s infinite;">'
+    + '<span class="material-symbols-outlined" style="color:#fff;font-size:48px;font-variation-settings:\'FILL\' 1;">volume_up</span></div>'
+    + '<div style="color:#fff;font-size:20px;font-weight:700;font-family:\'Source Sans 3\',sans-serif;">' + (AUDIO_GATE_T[getLang()] || AUDIO_GATE_T.English) + '</div>';
+  function dismissGate() {
+    MeetLingoRealtime.unlockAudio();
+    MeetLingoRealtime.unlockAudio();   // resume + prime once the gesture is live
+    _startOutputWaveform();
+    gate.style.opacity = '0';
+    setTimeout(function() { if (gate.parentNode) gate.parentNode.removeChild(gate); }, 250);
+  }
+  gate.addEventListener('click', dismissGate);
+  gate.addEventListener('touchend', function(e) { e.preventDefault(); dismissGate(); });
+  document.body.appendChild(gate);
+})();
+
 // ── Speaker indicator ─────────────────────────────────
 var _speakerIndicator = document.getElementById('speaker-indicator');
 var _speakerNameText  = document.getElementById('speaker-name-text');
