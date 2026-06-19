@@ -308,8 +308,23 @@ function openTranslateSession(room, speakerId, sourceLang, targetLang) {
     { headers: { 'Authorization': `Bearer ${key_env}` } }
   );
 
-  const session = { ws: openaiWs, active: false, speakerId, sourceLang, targetLang, pending: [] };
+  const session = { ws: openaiWs, active: false, speakerId, sourceLang, targetLang, pending: [], handshakeTimer: null };
   room.translateSessions.set(key, session);
+
+  // Recycle a failed/hung session so the next audio chunk transparently reopens a
+  // fresh one. Without this, a session that connects but never finishes the
+  // handshake (e.g. OpenAI hiccup/quota) keeps its key in the map forever and that
+  // speaker→language pair stays permanently silent ("translation suddenly breaks").
+  function dropSession(reason) {
+    clearTimeout(session.handshakeTimer);
+    if (reason) console.error(`[Translate ${room.code}] Drop ${key}: ${reason}`);
+    try { openaiWs.close(); } catch (e) {}
+    if (room.translateSessions.get(key) === session) room.translateSessions.delete(key);
+  }
+  // Connected but not "updated" within 10s → stuck; recycle it.
+  session.handshakeTimer = setTimeout(() => {
+    if (!session.active) dropSession('handshake timeout');
+  }, 10000);
 
   openaiWs.on('open', () => {
     console.log(`[Translate ${room.code}] WS open: ${key}`);
@@ -329,6 +344,7 @@ function openTranslateSession(room, speakerId, sourceLang, targetLang) {
         }));
       }
       else if (evt.type === 'session.updated') {
+        clearTimeout(session.handshakeTimer);
         session.active = true;
         session.pending.forEach((audioB64) => {
           openaiWs.send(JSON.stringify({ type: 'session.input_audio_buffer.append', audio: audioB64 }));
@@ -359,9 +375,7 @@ function openTranslateSession(room, speakerId, sourceLang, targetLang) {
       }
       else if (evt.type === 'error') {
         const msg = evt.error && evt.error.message ? evt.error.message : JSON.stringify(evt.error);
-        console.error(`[Translate ${room.code}] Error (${key}):`, msg);
-        try { openaiWs.close(); } catch (e) {}
-        if (room.translateSessions.get(key) === session) room.translateSessions.delete(key);
+        dropSession('error: ' + msg);
       }
     } catch (e) {
       console.error('[Translate] Parse error:', e.message);
@@ -369,11 +383,11 @@ function openTranslateSession(room, speakerId, sourceLang, targetLang) {
   });
 
   openaiWs.on('close', () => {
+    clearTimeout(session.handshakeTimer);
     if (room.translateSessions.get(key) === session) room.translateSessions.delete(key);
   });
   openaiWs.on('error', (err) => {
-    console.error(`[Translate ${room.code}] WS error (${key}):`, err.message);
-    if (room.translateSessions.get(key) === session) room.translateSessions.delete(key);
+    dropSession('ws error: ' + err.message);
   });
 }
 
