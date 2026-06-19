@@ -67,9 +67,34 @@ function createRoom() {
   rooms.set(room.code, room);
   return room;
 }
-function getRoom(code) {
-  return code ? rooms.get(String(code).trim().toUpperCase()) : null;
+// ── Single fixed session ("MAIN") ─────────────────────────────────────
+// The app runs ONE persistent room: guests never need a code and can never be
+// kicked by "room not found" — the room always exists. The host token is
+// derived deterministically so it stays valid across server restarts/redeploys.
+const MAIN_CODE  = 'MAIN';
+const MAIN_TOKEN = crypto.createHash('sha256')
+  .update('meetlingo-host::' + (process.env.HOST_SECRET || 'meetlingo-internal'))
+  .digest('hex');
+function ensureMainRoom() {
+  let room = rooms.get(MAIN_CODE);
+  if (!room) {
+    room = {
+      code: MAIN_CODE, hostToken: MAIN_TOKEN,
+      active: false, startTime: null, agenda: '',
+      participants: new Map(), translateSessions: new Map(),
+      speakerTimers: new Map(), lastActivity: Date.now()
+    };
+    rooms.set(MAIN_CODE, room);
+    console.log('[Room] MAIN session ready');
+  }
+  return room;
 }
+// Single-session mode: every lookup resolves to the always-present MAIN room,
+// so a stale/missing code from any client never 404s (→ no more listener kicks).
+function getRoom(code) {
+  return ensureMainRoom();
+}
+ensureMainRoom();   // exist from startup, before any request or the reaper runs
 function isHostAuthed(room, token) {
   return !!room && typeof token === 'string' && token.length > 0 &&
          crypto.timingSafeEqual(Buffer.from(token), Buffer.from(room.hostToken));
@@ -85,6 +110,7 @@ const ROOM_TTL_MS = 1000 * 60 * 60; // 1h idle
 setInterval(() => {
   const now = Date.now();
   rooms.forEach((room, code) => {
+    if (code === MAIN_CODE) return;   // the fixed session is never reaped
     if (room.participants.size === 0 && now - room.lastActivity > ROOM_TTL_MS) {
       closeAllTranslateSessions(room);
       rooms.delete(code);
@@ -107,11 +133,11 @@ app.post('/api/send-summary-email', express.json(), (req, res) => {
   res.json({ success: true });
 });
 
-// Host creates a fresh room and receives the secret token. Anyone may create
-// a room (they only ever control the room they created, via this token).
+// Single-session mode: "create-room" just hands the host the fixed MAIN room +
+// its (stable) token. Kept under the old name so host.html's bootstrap is
+// unchanged. Guests never call this; they join MAIN directly as listeners.
 app.post('/api/create-room', (req, res) => {
-  const room = createRoom();
-  console.log(`[Room] Created ${room.code}`);
+  const room = ensureMainRoom();
   res.json({ success: true, room: room.code, hostToken: room.hostToken });
 });
 

@@ -213,6 +213,20 @@
     </div>
   </div>
 
+  <!-- Invite card — QR stays available so people can join mid-meeting -->
+  <div style="background:#fff;border:1px solid #eee;border-radius:12px;width:100%;overflow:hidden;">
+    <div style="padding:10px 16px;background:#fafafa;border-bottom:1px solid #f0f0f0;font-size:13px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:6px;">
+      <span class="material-symbols-outlined" style="color:#95C11E;font-size:16px;">qr_code_2</span> Invite
+    </div>
+    <div style="padding:14px 16px;display:flex;align-items:center;gap:16px;">
+      <div id="qr-container-active" style="width:120px;height:120px;flex-shrink:0;"></div>
+      <div style="flex:1;min-width:0;">
+        <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#1a1c1c;">Scan to join — no code</p>
+        <p style="margin:0;font-size:13px;color:#888;">People can join anytime during the meeting.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Conversation (shared chat — same design as the listener view) -->
   <div style="background:#fff;border:1px solid #eee;border-radius:12px;width:100%;overflow:hidden;">
     <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fafafa;border-bottom:1px solid #f0f0f0;">
@@ -334,25 +348,11 @@
     <div class="w-full bg-white border border-surface-container rounded-xl p-6 flex flex-col items-center shadow-sm">
         <h2 class="text-label-md uppercase tracking-widest text-tertiary font-bold mb-4">Share Meeting</h2>
 
-        <!-- ── MEETING CODE BLOCK (prominent — guests type this to join) ── -->
-        <div style="width:100%;max-width:300px;background:linear-gradient(180deg,#f4f9e6 0%,#eef6d8 100%);border:1.5px solid #c5dd6e;border-radius:14px;padding:16px 18px 18px;display:flex;flex-direction:column;align-items:center;margin-bottom:18px;">
-            <p style="font-size:12px;color:#5a7300;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin:0 0 8px;font-family:'Source Sans 3',sans-serif;">Meeting code</p>
-            <div style="display:flex;align-items:center;gap:10px;">
-                <div id="host-room-code" style="font-size:38px;line-height:1;font-weight:800;letter-spacing:.28em;color:#1a1c1c;font-family:'Source Sans 3',sans-serif;text-indent:.28em;">······</div>
-                <button id="code-copy-btn" title="Copy code" onclick="(function(){var c=document.getElementById('host-room-code').textContent.trim();if(!c||c.indexOf('·')>-1)return;navigator.clipboard.writeText(c).then(function(){var b=document.getElementById('code-copy-btn');b.textContent='✓';setTimeout(function(){b.innerHTML='&#128203;';},1500);})})()" style="background:#fff;border:1.5px solid #c5dd6e;border-radius:9px;width:38px;height:38px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#5a7300;flex-shrink:0;">&#128203;</button>
-            </div>
-            <p style="font-size:12.5px;color:#6b7d3a;margin:9px 0 0;text-align:center;font-family:'Source Sans 3',sans-serif;">Guests enter this code to join</p>
-        </div>
-
-        <!-- divider -->
-        <div style="display:flex;align-items:center;gap:10px;width:100%;max-width:300px;margin-bottom:14px;">
-            <span style="flex:1;height:1px;background:#e2e2e2;"></span>
-            <span style="font-size:11px;color:#9a9a9a;font-weight:700;letter-spacing:.1em;font-family:'Source Sans 3',sans-serif;">OR SCAN</span>
-            <span style="flex:1;height:1px;background:#e2e2e2;"></span>
-        </div>
+        <!-- One fixed session — guests just scan, no code needed -->
+        <p style="font-size:13.5px;color:#555;margin:0 0 14px;text-align:center;font-family:'Source Sans 3',sans-serif;">Guests scan this to join — no code needed</p>
 
         <!-- Real QR code rendered here by qrcode.js -->
-        <div id="qr-container" class="mb-3 flex items-center justify-center" style="width:160px;height:160px;"></div>
+        <div id="qr-container" class="mb-3 flex items-center justify-center" style="width:200px;height:200px;"></div>
         <!-- Shareable URL with copy button -->
         <div style="display:flex;align-items:center;gap:8px;background:#f5f5f5;border-radius:10px;padding:9px 12px;width:100%;max-width:280px;">
           <p id="qr-url" style="font-size:13px;color:#4b6400;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;font-family:'Source Sans 3',sans-serif;"></p>
@@ -418,25 +418,17 @@
     var ML_ROOM       = localStorage.getItem('meetlingo_room') || '';
     var ML_HOST_TOKEN = localStorage.getItem('meetlingo_host_token') || '';
     function roomBody(extra) { return Object.assign({ room: ML_ROOM, hostToken: ML_HOST_TOKEN }, extra || {}); }
-    window._roomReady = (function() {
-        function makeRoom() {
-            return fetch('/api/create-room', { method: 'POST' })
-                .then(function(r) { return r.json(); })
-                .then(function(d) {
-                    ML_ROOM = d.room; ML_HOST_TOKEN = d.hostToken;
-                    localStorage.setItem('meetlingo_room', ML_ROOM);
-                    localStorage.setItem('meetlingo_host_token', ML_HOST_TOKEN);
-                    console.log('[Host] Created room', ML_ROOM);
-                });
-        }
-        if (ML_ROOM && ML_HOST_TOKEN) {
-            return fetch('/api/meeting-status?room=' + encodeURIComponent(ML_ROOM))
-                .then(function(r) { return r.json(); })
-                .then(function(d) { if (!d.exists) return makeRoom(); })
-                .catch(makeRoom);
-        }
-        return makeRoom();
-    })();
+    // Single fixed session: always (re)claim the MAIN room + its current token
+    // on load. We must NOT reuse a stored token — the server's MAIN token can
+    // change across restarts, and a stale token would 403 every host action.
+    window._roomReady = fetch('/api/create-room', { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            ML_ROOM = d.room; ML_HOST_TOKEN = d.hostToken;
+            localStorage.setItem('meetlingo_room', ML_ROOM);
+            localStorage.setItem('meetlingo_host_token', ML_HOST_TOKEN);
+            console.log('[Host] Using session', ML_ROOM);
+        });
 
     // ── Refs ──────────────────────────────────────
     var actionBtn   = document.getElementById('main-action-btn');
@@ -734,29 +726,25 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
   window._roomReady.then(function() {
-    var meetingUrl = window.location.origin + '/?room=' + ML_ROOM;
-    var container  = document.getElementById('qr-container');
+    // Single fixed session — the join link is just the site root, no code.
+    var meetingUrl = window.location.origin + '/';
     var urlLabel   = document.getElementById('qr-url');
     var localHint  = document.getElementById('qr-local-hint');
-    var codeEl     = document.getElementById('host-room-code');
 
-    if (codeEl) codeEl.textContent = ML_ROOM;
-
-    // Show warning if running locally
     var isLocal = meetingUrl.includes('localhost') || meetingUrl.includes('127.0.0.1');
     if (isLocal && localHint) localHint.style.display = 'block';
 
-    if (container && typeof QRCode !== 'undefined') {
-      container.innerHTML = '';
-      new QRCode(container, {
-        text:         meetingUrl,
-        width:        160,
-        height:       160,
-        colorDark:    '#1A1A1A',
-        colorLight:   '#FFFFFF',
-        correctLevel: QRCode.CorrectLevel.M
-      });
+    function renderQR(id, size) {
+      var c = document.getElementById(id);
+      if (c && typeof QRCode !== 'undefined') {
+        c.innerHTML = '';
+        new QRCode(c, { text: meetingUrl, width: size, height: size,
+          colorDark: '#1A1A1A', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.M });
+      }
     }
+    renderQR('qr-container', 200);          // setup view
+    renderQR('qr-container-active', 120);   // active view — lets people join mid-meeting
+
     if (urlLabel) urlLabel.textContent = meetingUrl;
   });
 </script>

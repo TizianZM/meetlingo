@@ -149,13 +149,7 @@
 <p class="text-body-md text-tertiary">Enter the meeting code, then pick your language</p>
 </div>
 
-<!-- Meeting code (auto-filled from the host's QR link ?room=) -->
-<div class="w-full max-w-[320px]">
-  <label class="text-caption text-tertiary uppercase tracking-widest block mb-1 text-center">Meeting code</label>
-  <input id="room-code-input" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="ABC123"
-    class="w-full text-center uppercase font-bold text-[22px] py-3 rounded-xl border border-surface-container bg-white focus:outline-none focus:border-[#95C11E]"
-    style="font-family:'Source Sans 3',sans-serif;letter-spacing:0.3em;" />
-</div>
+<!-- Single fixed session: no meeting code — guests just pick a language -->
 
 <!-- QR Code Card -->
 <div class="bg-white border border-surface-container rounded-xl p-8 flex flex-col items-center shadow-sm w-full max-w-[320px] qr-pulse">
@@ -341,24 +335,13 @@ Are you the presenter? <a href="host.html" class="text-[#95C11E] font-semibold u
         document.getElementById('more-langs-label').textContent = moreLangsOpen ? 'Show less' : 'More languages';
     });
 
-    // Prefill the meeting code from the host QR link (?room=) or a stored room
-    (function() {
-        var params = new URLSearchParams(location.search);
-        var room   = (params.get('room') || localStorage.getItem('meetlingo_room') || '').toUpperCase();
-        var input  = document.getElementById('room-code-input');
-        if (input) {
-            input.value = room;
-            input.addEventListener('input', function() { input.value = input.value.toUpperCase(); });
-        }
-        if (room) localStorage.setItem('meetlingo_room', room);
-    })();
+    // Single fixed session — everyone joins the one MAIN room (no code).
+    localStorage.setItem('meetlingo_room', 'MAIN');
 
-    // Flag buttons → save room code + language, then go to login
+    // Flag buttons → save language, then go to login
     document.querySelectorAll('.flag-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            var input = document.getElementById('room-code-input');
-            var code  = input ? input.value.trim().toUpperCase() : '';
-            if (code) localStorage.setItem('meetlingo_room', code);
+            localStorage.setItem('meetlingo_room', 'MAIN');
             localStorage.setItem('meetlingo_lang', btn.dataset.lang);
             window.location.href = 'login.html';
         });

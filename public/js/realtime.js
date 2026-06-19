@@ -170,7 +170,7 @@
       // Host uses its own key so the spoken language never contaminates listener prefs in the same browser.
       var lang = localStorage.getItem(_langKey()) || 'English';
       var name = localStorage.getItem(_nameKey()) || '';
-      var room = localStorage.getItem('meetlingo_room') || '';
+      var room = localStorage.getItem('meetlingo_room') || 'MAIN';
       console.log('[Realtime] WS connected');
       clearTimeout(_reconnectTimer);
       var payload = { type: 'join', lang: lang, role: role, name: name, room: room };

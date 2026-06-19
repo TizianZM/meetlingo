@@ -204,13 +204,14 @@
   // The join ack tells us if the meeting is already live → jump in immediately.
   window.onMLConnected     = function(msg) { if (msg && msg.active) gotoMeeting(); };
   window.onMLMeetingStarted = gotoMeeting;
-  // Bad/expired code → back to the join screen.
-  window.onMLRoomNotFound  = function() { window.mlLeaveOk = true; window.location.href = 'index.html'; };
+  // Single fixed session: the room always exists, so this should never fire.
+  // Defensive — reconnect by reloading instead of bouncing to the start screen.
+  window.onMLRoomNotFound  = function() { setTimeout(function(){ window.location.reload(); }, 1500); };
 
   // ── Poll server for meeting status every 1.5 seconds ──────────
   var pollInterval = setInterval(async function() {
     try {
-      var room = localStorage.getItem('meetlingo_room') || '';
+      var room = localStorage.getItem('meetlingo_room') || 'MAIN';
       var res  = await fetch('/api/meeting-status?room=' + encodeURIComponent(room));
       var data = await res.json();
       if (data.active) {
